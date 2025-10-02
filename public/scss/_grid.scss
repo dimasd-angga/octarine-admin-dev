@@ -1,0 +1,111 @@
+/* Custom Grid System */
+$grid-columns: 12; // Jumlah kolom default
+$grid-gutter: 20px; // Jarak antar kolom (gutter)
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+); // Breakpoints untuk responsivitas
+
+/* Container */
+.container {
+  width: 100%;
+  padding-left: $grid-gutter / 2;
+  padding-right: $grid-gutter / 2;
+  margin-left: auto;
+  margin-right: auto;
+
+  // Max width berdasarkan breakpoint
+  @each $name, $width in $grid-breakpoints {
+    @media (min-width: $width) {
+      max-width: if($name == xxl, 1320px, $width);
+    }
+  }
+}
+
+/* Row */
+.row {
+  display: grid;
+  grid-template-columns: repeat($grid-columns, 1fr);
+  gap: $grid-gutter;
+  width: 100%;
+
+  //   @each $name, $width in $grid-breakpoints {
+  //     @media (max-width: $width - 1px) {
+  //       &.row-#{$name} {
+  //         grid-template-columns: repeat($grid-columns, 1fr);
+  //       }
+  //     }
+  //   }
+}
+
+/* Column */
+@for $i from 1 through $grid-columns {
+  .col-#{$i} {
+    grid-column: span $i;
+  }
+
+  @each $name, $width in $grid-breakpoints {
+    @media (min-width: $width) {
+      .col-#{$name}-#{$i} {
+        grid-column: span $i;
+      }
+    }
+  }
+}
+
+/* Utility Classes */
+.col-auto {
+  grid-column: auto;
+}
+
+.col-start-1 {
+  grid-column-start: 1;
+}
+
+.col-end-13 {
+  grid-column-end: 13;
+}
+
+/* Offset Classes */
+@for $i from 1 through $grid-columns {
+  .offset-#{$i} {
+    grid-column-start: $i + 1;
+  }
+
+  @each $name, $width in $grid-breakpoints {
+    @media (min-width: $width) {
+      .offset-#{$name}-#{$i} {
+        grid-column-start: $i + 1;
+      }
+    }
+  }
+}
+
+/* Alignment Utilities */
+.justify-start {
+  justify-content: flex-start;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.align-start {
+  align-items: flex-start;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.align-end {
+  align-items: flex-end;
+}
