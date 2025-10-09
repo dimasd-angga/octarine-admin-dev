@@ -1,0 +1,8 @@
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "status": "pending",
+  "commissionRate": 10,
+  "paymentMethod": "PayPal (john@paypal.com)",
+  "referralCode": "JOHN123"
+}

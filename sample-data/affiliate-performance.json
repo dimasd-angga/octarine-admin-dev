@@ -1,0 +1,14 @@
+{
+  "affiliateId": 1,
+  "totalClicks": 1200,
+  "conversions": 85,
+  "conversionRate": 7.08,
+  "earnings": 250.75,
+  "chartData": [
+    { "date": "2025-08-01", "clicks": 100, "conversions": 5, "earnings": 20 },
+    { "date": "2025-08-02", "clicks": 150, "conversions": 8, "earnings": 30 },
+    { "date": "2025-08-03", "clicks": 200, "conversions": 12, "earnings": 45 },
+    { "date": "2025-08-04", "clicks": 250, "conversions": 15, "earnings": 55 },
+    { "date": "2025-08-05", "clicks": 180, "conversions": 10, "earnings": 40 }
+  ]
+}

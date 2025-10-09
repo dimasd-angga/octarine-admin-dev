@@ -1,0 +1,18 @@
+{
+  "id": 1,
+  "userId": 42,
+  "productId": 101,
+  "rating": 4,
+  "comment": "Great product! Works as expected.",
+  "status": "PENDING",
+  "approved": false,
+  "createdAt": "2025-08-29T12:00:00Z",
+  "updatedAt": "2025-08-29T12:00:00Z",
+  "moderation": {
+    "approvedBy": null,
+    "approvedAt": null,
+    "rejectedBy": null,
+    "rejectedAt": null,
+    "reason": null
+  }
+}

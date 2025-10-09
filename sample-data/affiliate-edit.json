@@ -1,0 +1,8 @@
+{
+  "name": "John Doe Updated",
+  "email": "john.new@example.com",
+  "status": "active",
+  "commissionRate": 12,
+  "paymentMethod": "Bank Transfer (****5678)",
+  "referralCode": "JOHNNEW12"
+}

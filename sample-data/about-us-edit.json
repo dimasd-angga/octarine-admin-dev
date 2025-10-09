@@ -1,0 +1,24 @@
+{
+  "heroImage": "/uploads/new-hero.jpg",
+  "about": {
+    "image": "/uploads/new-about.jpg",
+    "title": "About Octarine",
+    "description": "Updated description for About section...",
+    "buttonText": "Shop Now"
+  },
+  "fragrant": {
+    "image": "/uploads/new-fragrant.jpg",
+    "title": "Fragrant",
+    "description": "Updated text for Fragrant section."
+  },
+  "discover": {
+    "image": "/uploads/new-discover.jpg",
+    "title": "Discover",
+    "description": "Updated text for Discover section."
+  },
+  "story": {
+    "image": "/uploads/new-story.jpg",
+    "title": "Our Story",
+    "description": "Updated text for Story section."
+  }
+}

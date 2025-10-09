@@ -1,0 +1,21 @@
+{
+  "hero": {
+    "image": "/uploads/contact-hero.jpg",
+    "title": "Contact Us",
+    "subtitle": "We’d love to hear from you. Reach us anytime."
+  },
+  "info": {
+    "address": "Jl. Sudirman No. 45, Jakarta, Indonesia",
+    "phone": "+62 812-3456-7890",
+    "email": "hello@octarine.com",
+    "hours": "Mon - Fri: 09:00 - 18:00"
+  },
+  "socials": {
+    "facebook": "https://facebook.com/octarine",
+    "instagram": "https://instagram.com/octarine",
+    "linkedin": "https://linkedin.com/company/octarine"
+  },
+  "map": {
+    "embedUrl": "https://maps.google.com/..."
+  }
+}

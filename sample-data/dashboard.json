@@ -1,0 +1,121 @@
+{
+  "totalRevenue": 10000,
+  "totalOrders": 500,
+  "totalRefunds": 10,
+  "salesHistory": [
+    {
+      "date": "2025-08-01",
+      "revenue": 1200,
+      "orders": 32
+    },
+    {
+      "date": "2025-08-02",
+      "revenue": 980,
+      "orders": 28
+    },
+    {
+      "date": "2025-08-03",
+      "revenue": 1450,
+      "orders": 40
+    }
+  ],
+  "registeredUsers": 5400,
+  "activeUsers": 1230,
+  "bestSellingProducts": [
+    {
+      "id": 1,
+      "name": "Laptop X",
+      "sold": 120,
+      "stock": 20,
+      "price": 1200
+    },
+    {
+      "id": 2,
+      "name": "Headphones Y",
+      "sold": 85,
+      "stock": 15,
+      "price": 850
+    },
+    {
+      "id": 3,
+      "name": "Phone Z",
+      "sold": 70,
+      "stock": 10,
+      "price": 700
+    }
+  ],
+  "lowStockProducts": [
+    {
+      "id": 4,
+      "name": "Keyboard A",
+      "stock": 5
+    }
+  ],
+  "usageTrends": [
+    {
+      "date": "2025-08-21",
+      "usage": 12
+    },
+    {
+      "date": "2025-08-22",
+      "usage": 18
+    },
+    {
+      "date": "2025-08-23",
+      "usage": 10
+    },
+    {
+      "date": "2025-08-24",
+      "usage": 22
+    },
+    {
+      "date": "2025-08-25",
+      "usage": 15
+    },
+    {
+      "date": "2025-08-26",
+      "usage": 30
+    },
+    {
+      "date": "2025-08-27",
+      "usage": 20
+    }
+  ],
+  "topVouchers": [
+    {
+      "code": "SUMMER20",
+      "used": 150,
+      "conversion": 12
+    },
+    {
+      "code": "WELCOME10",
+      "used": 95,
+      "conversion": 7
+    },
+    {
+      "code": "VIP30",
+      "used": 40,
+      "conversion": 3
+    }
+  ],
+  "voucherUsages": [
+    {
+      "id": 1,
+      "code": "SUMMER20",
+      "user": "Alice",
+      "usedAt": "2025-08-25 14:23"
+    },
+    {
+      "id": 2,
+      "code": "WELCOME10",
+      "user": "Bob",
+      "usedAt": "2025-08-25 13:50"
+    },
+    {
+      "id": 3,
+      "code": "SUMMER20",
+      "user": "Carol",
+      "usedAt": "2025-08-25 11:05"
+    }
+  ]
+}

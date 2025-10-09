@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "status": "active",
+  "commissionRate": 10,
+  "totalEarnings": 250.75,
+  "paymentMethod": "PayPal (john@paypal.com)",
+  "referralCode": "JOHN123",
+  "createdAt": "2025-08-15T10:00:00Z",
+  "updatedAt": "2025-09-05T10:30:00Z"
+}

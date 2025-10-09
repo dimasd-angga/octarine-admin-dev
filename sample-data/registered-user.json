@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "email": "johndoe@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "phoneNumber": "+628123456789",
+  "status": "ACTIVE",
+  "role": "USER",
+  "createdAt": "2025-08-29T12:30:00.000Z",
+  "updatedAt": "2025-08-29T13:00:00.000Z",
+  "lastLogin": "2025-08-28T08:45:00.000Z"
+}

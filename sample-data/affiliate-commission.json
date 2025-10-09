@@ -1,0 +1,20 @@
+[
+  {
+    "id": 101,
+    "affiliateId": 1,
+    "affiliateName": "John Doe",
+    "orderId": "ORD-5678",
+    "commissionAmount": 25.5,
+    "status": "paid",
+    "createdAt": "2025-09-01T09:15:00Z"
+  },
+  {
+    "id": 102,
+    "affiliateId": 2,
+    "affiliateName": "Jane Smith",
+    "orderId": "ORD-5689",
+    "commissionAmount": 40.0,
+    "status": "pending",
+    "createdAt": "2025-09-02T11:30:00Z"
+  }
+]
