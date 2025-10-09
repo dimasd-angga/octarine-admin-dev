@@ -38,11 +38,9 @@ export default function BannerCreate() {
     },
   });
 
- 
   const handleFileChange = (selectedFile: File | null) => {
     setFile(selectedFile);
 
-  
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -80,7 +78,7 @@ export default function BannerCreate() {
 
     mutate(
       {
-        resource: "banner/create", 
+        resource: "banner/create",
         values: formData,
       },
       {
@@ -147,6 +145,10 @@ export default function BannerCreate() {
         data={[
           { label: "Home Bottom", value: "HOME_BOTTOM" },
           { label: "Home Top", value: "HOME_TOP" },
+          { label: "Collection Men", value: "COLLECTION_MEN" },
+          { label: "Collection Women", value: "COLLECTION_WOMEN" },
+          { label: "Collection Unisex", value: "COLLECTION_UNISEX" },
+          { label: "Collection Segmented", value: "COLLECTION_SEGMENTED" },
         ]}
         required
         mt="sm"

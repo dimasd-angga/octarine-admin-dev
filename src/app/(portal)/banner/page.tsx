@@ -81,6 +81,11 @@ export default function BannerListPage() {
         },
       },
       {
+        id: "type",
+        header: "Type",
+        accessorKey: "type",
+      },
+      {
         id: "url",
         header: "URL",
         accessorKey: "url",

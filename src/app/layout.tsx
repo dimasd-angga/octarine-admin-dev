@@ -42,9 +42,7 @@ import {
 import { authProvider } from "@providers/auth-provider";
 import { dataProvider } from "@providers/data-provider";
 import { axiosInstance } from "@service/axiosInstance";
-import "@styles/global.css";
 import { CustomTitle } from "@components/layout/CustomSidebarTitle";
-import { create } from "domain";
 
 export default function RootLayout({
   children,

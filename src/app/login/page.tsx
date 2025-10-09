@@ -36,7 +36,7 @@ export default function LoginPage() {
       },
       {
         onSuccess: () => {
-          list('banner')
+          list("dashboard");
         },
         onError: (error) => {
           console.error("Login Error:", error);
@@ -60,9 +60,15 @@ export default function LoginPage() {
             backgroundColor: theme.colors.gray[0],
           })}
         >
-            <div style={{ marginBottom: "70px", marginTop: '-80px', textAlign: "center" }}>
-                <img src="/octarine-logo.svg" alt="My App" style={{ height: 70 }} />
-            </div>
+          <div
+            style={{
+              marginBottom: "70px",
+              marginTop: "-80px",
+              textAlign: "center",
+            }}
+          >
+            <img src="/octarine-logo.svg" alt="My App" style={{ height: 70 }} />
+          </div>
           <Box
             sx={(theme) => ({
               maxWidth: 400,
@@ -73,9 +79,9 @@ export default function LoginPage() {
               backgroundColor: theme.white,
             })}
           >
-              <Text size="md" weight={200} color="black" align="center">
-                  Welcome Back!
-              </Text>
+            <Text size="md" weight={200} color="black" align="center">
+              Welcome Back!
+            </Text>
             <Text size="lg" weight={700} color="black" align="center" mb="md">
               Sign in to your account
             </Text>

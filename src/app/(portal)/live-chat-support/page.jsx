@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
     Avatar,
     Box,
@@ -15,114 +15,90 @@ import {
     Button,
     Checkbox,
     Image,
+    Loader,
+    Center,
 } from "@mantine/core";
 import { IconCirclePlus, IconSend } from "@tabler/icons-react";
-
-// 🔹 Dummy product list (for modal selection)
-const products = [
-    {
-        id: 1,
-        name: "Black Opium - PLATINUM",
-        size: "50ml",
-        imageUrl: "https://via.placeholder.com/80x80.png?text=Platinum",
-    },
-    {
-        id: 2,
-        name: "Black Opium - GOLD",
-        size: "50ml",
-        imageUrl: "https://via.placeholder.com/80x80.png?text=Gold",
-    },
-];
-
-// 🔹 Dummy chat data with attached products
-const chats = [
-    {
-        id: 9007199254740991,
-        ticketNumber: "CS-2025-00001",
-        subject: "Detail Product",
-        status: "OPEN",
-        priority: "MEDIUM",
-        customerName: "Hello User",
-        lastMessage: "Baik kak, kami cek kembali ya...",
-        avatar: "https://i.pravatar.cc/100?img=1",
-        messages: [
-            {
-                id: 1,
-                sender: "support",
-                text: "Ada yang bisa kami bantu kak?",
-                time: "13:00",
-            },
-            {
-                id: 2,
-                sender: "user",
-                text: "Untuk pesanan saya apakah sudah dikirim?",
-                time: "13:01",
-            },
-            {
-                id: 3,
-                sender: "support",
-                text: "Berikut produk yang Anda tanyakan:",
-                time: "13:05",
-                attachedProductVariants: [
-                    {
-                        id: "p1",
-                        name: "Black Opium - PLATINUM",
-                        size: "50ml",
-                        imageUrl: "https://via.placeholder.com/80x80.png?text=Platinum",
-                    },
-                    {
-                        id: "p2",
-                        name: "Black Opium - GOLD",
-                        size: "50ml",
-                        imageUrl: "https://via.placeholder.com/80x80.png?text=Gold",
-                    },
-                ],
-            },
-        ],
-    },
-];
+import { useCreate, useList, useShow } from "@refinedev/core";
+import { getTimeAgo } from "@utils/getTimeAgo";
 
 export default function ChatPage() {
-    const [activeChat, setActiveChat] = React.useState(chats[0]);
-    const [newMessage, setNewMessage] = React.useState("");
-    const [modalOpened, setModalOpened] = React.useState(false);
-    const [selectedProducts, setSelectedProducts] = React.useState([]);
+    // 🔹 Fetch sidebar chat list
+    const {
+        data: chatsData,
+        isLoading: chatsLoading,
+        isError: chatsError,
+    } = useList({
+        resource: "support/ticket/list",
+    });
 
-    const handleSend = () => {
-        if (!newMessage.trim() && selectedProducts.length === 0) return;
+    // 🔹 Fetch product list
+    const {
+        data: productsData,
+        isLoading: productsLoading,
+        isError: productsError,
+    } = useList({
+        resource: "product/list",
+    });
 
-        const newMessages = [];
+    const chats = chatsData?.data || [];
+    const products = (productsData?.data ?? []).map(product => product.variants).reduce((previous, current) => previous.concat(current), []);
 
-        // 🔹 Add selected products as attachedProductVariants
-        if (selectedProducts.length > 0) {
-            const attached = selectedProducts.map((pid) =>
-                products.find((p) => p.id === pid)
+    // 🔹 Track selected chat
+    const [selectedChatId, setSelectedChatId] = useState(null);
+
+    // 🔹 Fetch chat detail dynamically (auto-refetches when id changes)
+    const {
+        query: { data: chatDetail, isLoading: chatLoading, isError: chatError, refetch: chatRefetch },
+    } = useShow({
+        resource: "support/ticket",
+        id: selectedChatId,
+        queryOptions: {
+            enabled: !!selectedChatId, // only run when ID exists
+        },
+    });
+
+    const activeChat = chatDetail?.data || null;
+
+    // 🔹 Message composer
+    const [newMessage, setNewMessage] = useState("");
+    const [modalOpened, setModalOpened] = useState(false);
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const { mutate: createMessage, isPending: sending } = useCreate();
+
+    const handleSend = async () => {
+        if (!activeChat) return;
+        if (!newMessage.trim()) return;
+
+        const payload = {
+            message: newMessage.trim(),
+            productVariantIds: selectedProducts,
+        };
+
+        try {
+            // 🔹 Send message to backend
+            createMessage(
+                {
+                    resource: `support/ticket/${activeChat.id}/message`,
+                    values: payload,
+                },
+                {
+                    onSuccess: () => {
+                        // 🔹 Refetch chat detail to refresh message list
+                        chatRefetch();
+                        setNewMessage("");
+                        setSelectedProducts([]);
+                    },
+                    onError: (error) => {
+                        console.error("Failed to send message:", error);
+                    },
+                }
             );
-            newMessages.push({
-                id: Date.now(),
-                sender: "user",
-                text: newMessage.trim() || "",
-                time: "13:10",
-                attachedProductVariants: attached,
-            });
-            setSelectedProducts([]);
-        } else if (newMessage.trim()) {
-            // 🔹 Normal text message
-            newMessages.push({
-                id: Date.now(),
-                sender: "user",
-                text: newMessage,
-                time: "13:10",
-            });
+        } catch (error) {
+            console.error("Unexpected error while sending message:", error);
         }
-
-        setActiveChat({
-            ...activeChat,
-            messages: [...activeChat.messages, ...newMessages],
-        });
-
-        setNewMessage("");
     };
+
 
     const toggleProduct = (id) => {
         setSelectedProducts((prev) =>
@@ -130,11 +106,28 @@ export default function ChatPage() {
         );
     };
 
+    // 🔹 Handle loading/error states
+    if (chatsLoading || productsLoading) {
+        return (
+            <Center style={{ height: "100vh" }}>
+                <Loader />
+            </Center>
+        );
+    }
+
+    if (chatsError || productsError) {
+        return (
+            <Center style={{ height: "100vh" }}>
+                <Text color="red">Failed to load chats or products.</Text>
+            </Center>
+        );
+    }
+
     return (
-        <Group spacing={0} align="stretch" style={{ height: "100vh" }}>
-            {/* 🔹 Left Sidebar */}
+        <Group spacing={0} align="stretch" style={{ height: "85vh" }}>
+            {/* 🔹 Sidebar */}
             <Card shadow="sm" padding="md" withBorder style={{ width: "280px" }}>
-                <Text weight={600} mb="md">
+                <Text fw={600} mb="md">
                     Chat
                 </Text>
                 <Card.Section>
@@ -145,19 +138,19 @@ export default function ChatPage() {
                                     key={chat.id}
                                     padding="sm"
                                     withBorder
-                                    onClick={() => setActiveChat(chat)}
+                                    onClick={() => setSelectedChatId(chat.id)}
                                     style={{
                                         cursor: "pointer",
                                         backgroundColor:
-                                            activeChat.id === chat.id ? "#f8f9fa" : "white",
+                                            selectedChatId === chat.id ? "#f8f9fa" : "white",
                                     }}
                                 >
                                     <Group>
                                         <Avatar src={chat.avatar} radius="xl" />
                                         <Box>
-                                            <Text weight={500}>{chat.customerName}</Text>
-                                            <Text size="sm" color="dimmed" truncate>
-                                                {chat.lastMessage}
+                                            <Text fw={500}>{chat.customerName}</Text>
+                                            <Text size="sm" c="dimmed" truncate>
+                                                {chat.description}
                                             </Text>
                                         </Box>
                                     </Group>
@@ -168,110 +161,174 @@ export default function ChatPage() {
                 </Card.Section>
             </Card>
 
-            {/* 🔹 Chat Window */}
+            {/* 🔹 Chat Detail */}
             <Card shadow="sm" padding="md" withBorder style={{ flex: 1 }}>
-                {/* Header */}
-                <Group mb="md">
-                    <Avatar src={activeChat.avatar} radius="xl" />
-                    <Box>
-                        <Text weight={600}>{activeChat.customerName}</Text>
-                        <Text size="sm" color="dimmed">
-                            {activeChat.subject} · Ticket {activeChat.ticketNumber}
-                        </Text>
-                    </Box>
-                </Group>
-
-                {/* Messages */}
-                <ScrollArea style={{ height: "75vh" }}>
-                    <Stack spacing="sm">
-                        {activeChat.messages.map((msg) => (
-                            <Box
-                                key={msg.id}
-                                style={{
-                                    alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
-                                    maxWidth: "60%",
-                                }}
-                            >
-                                <Card
-                                    padding="sm"
-                                    radius="lg"
-                                    style={{
-                                        backgroundColor:
-                                            msg.sender === "user" ? "#e0e0e0" : "#f1f1f1",
-                                    }}
-                                >
-                                    {/* Text message */}
-                                    {msg.text && <Text size="sm">{msg.text}</Text>}
-
-                                    {/* 🔹 Attached Products */}
-                                    {msg.attachedProductVariants?.length > 0 && (
-                                        <Stack mt="sm" spacing="xs">
-                                            {msg.attachedProductVariants.map((p) => (
-                                                <Group key={p.id} spacing="sm" align="center">
-                                                    <Image
-                                                        src={p.imageUrl}
-                                                        width={40}
-                                                        height={40}
-                                                        radius="sm"
-                                                        withPlaceholder
-                                                    />
-                                                    <Box>
-                                                        <Text size="sm" weight={500}>
-                                                            {p.name}
-                                                        </Text>
-                                                        <Text size="xs" color="dimmed">
-                                                            {p.size}
-                                                        </Text>
-                                                    </Box>
-                                                </Group>
-                                            ))}
-                                        </Stack>
-                                    )}
-
-                                    {/* Timestamp */}
-                                    <Text
-                                        size="xs"
-                                        color="dimmed"
-                                        align="right"
-                                        mt={msg.attachedProductVariants ? "sm" : "xs"}
-                                    >
-                                        {msg.time}
-                                    </Text>
-                                </Card>
+                {!selectedChatId ? (
+                    <Center style={{ height: "100%" }}>
+                        <Text c="dimmed">Select a chat to start messaging</Text>
+                    </Center>
+                ) : chatLoading ? (
+                    <Center style={{ height: "100%" }}>
+                        <Loader />
+                    </Center>
+                ) : chatError ? (
+                    <Center style={{ height: "100%" }}>
+                        <Text color="red">Failed to load chat detail.</Text>
+                    </Center>
+                ) : (
+                    <>
+                        {/* Header */}
+                        <Group mb="md">
+                            <Avatar src={activeChat.avatar} radius="xl" />
+                            <Box>
+                                <Text fw={600}>{activeChat.customerName}</Text>
+                                <Text size="sm" c="dimmed">
+                                    {activeChat.subject} · Ticket {activeChat.ticketNumber}
+                                </Text>
                             </Box>
-                        ))}
-                    </Stack>
-                </ScrollArea>
+                        </Group>
 
-                {/* Input Section */}
-                <Group mt="md" spacing="xs">
-                    <TextInput
-                        placeholder="Write your message here..."
-                        style={{ flex: 1 }}
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.currentTarget.value)}
-                        rightSection={
+                        {/* Messages */}
+                        <ScrollArea style={{ height: "75vh" }}>
+                            <Stack spacing="sm">
+                                {activeChat.messages?.map((msg) => (
+                                    <Box
+                                        key={msg.id}
+                                        style={{
+                                            alignSelf:
+                                                msg.senderType === "CUSTOMER" ? "flex-start" : "flex-end",
+                                            maxWidth: "60%",
+                                        }}
+                                    >
+                                        <Card
+                                            padding="sm"
+                                            radius="lg"
+                                            style={{
+                                                backgroundColor:
+                                                    msg.sender === "CUSTOMER" ? "#f1f1f1" : "#e0e0e0",
+                                            }}
+                                        >
+                                            {msg.message && <Text size="sm">{msg.message}</Text>}
+
+                                            {msg.attachedProductVariants?.length > 0 && (
+                                                <Stack mt="sm" spacing="xs">
+                                                    {msg.attachedProductVariants.map((p) => (
+                                                        <Group key={p.id} spacing="sm" align="center">
+                                                            <Image
+                                                                src={p.imageUrl}
+                                                                width={40}
+                                                                height={40}
+                                                                radius="sm"
+                                                                withPlaceholder
+                                                            />
+                                                            <Box>
+                                                                <Text size="sm" fw={500}>
+                                                                    {p.name}
+                                                                </Text>
+                                                                <Text size="xs" c="dimmed">
+                                                                    IDR {p.price.toLocaleString()}
+                                                                </Text>
+                                                            </Box>
+                                                        </Group>
+                                                    ))}
+                                                </Stack>
+                                            )}
+
+                                            <Text
+                                                size="xs"
+                                                c="dimmed"
+                                                ta="right"
+                                                mt={msg.attachedProductVariants ? "sm" : "xs"}
+                                            >
+                                                {getTimeAgo(msg.createdAt)}
+                                            </Text>
+                                        </Card>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        </ScrollArea>
+
+                        {/* 🔹 Selected product previews */}
+                        {selectedProducts.length > 0 && (
+                            <Group mt="md" spacing="xs" wrap="wrap">
+                                {selectedProducts.map((pid) => {
+                                    const product = products.find((p) => p.id === pid);
+                                    if (!product) return null;
+
+                                    return (
+                                        <Card
+                                            key={pid}
+                                            padding="xs"
+                                            radius="md"
+                                            withBorder
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px",
+                                            }}
+                                        >
+                                            <Image
+                                                src={product.imageUrl}
+                                                width={30}
+                                                height={30}
+                                                radius="sm"
+                                                withPlaceholder
+                                            />
+                                            <Text size="sm" fw={500} lineClamp={1}>
+                                                {product.name}
+                                            </Text>
+                                            <ActionIcon
+                                                size="sm"
+                                                variant="subtle"
+                                                color="red"
+                                                onClick={() =>
+                                                    setSelectedProducts((prev) =>
+                                                        prev.filter((id) => id !== pid)
+                                                    )
+                                                }
+                                            >
+                                                ✕
+                                            </ActionIcon>
+                                        </Card>
+                                    );
+                                })}
+                            </Group>
+                        )}
+
+                        {/* Input */}
+                        <Group mt="md" spacing="xs">
+                            <TextInput
+                                placeholder="Write your message..."
+                                style={{ flex: 1 }}
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.currentTarget.value)}
+                                disabled={sending}
+                                rightSection={
+                                    <ActionIcon
+                                        variant="subtle"
+                                        color="gray"
+                                        onClick={() => setModalOpened(true)}
+                                    >
+                                        <IconCirclePlus size={18} />
+                                    </ActionIcon>
+                                }
+                            />
                             <ActionIcon
-                                variant="subtle"
-                                color="gray"
-                                onClick={() => setModalOpened(true)}
+                                color="dark"
+                                variant="filled"
+                                radius="xl"
+                                onClick={handleSend}
+                                loading={sending}
+                                disabled={sending}
                             >
-                                <IconCirclePlus size={18} />
+                                <IconSend size={18} />
                             </ActionIcon>
-                        }
-                    />
-                    <ActionIcon
-                        color="dark"
-                        variant="filled"
-                        radius="xl"
-                        onClick={handleSend}
-                    >
-                        <IconSend size={18} />
-                    </ActionIcon>
-                </Group>
+                        </Group>
+                    </>
+                )}
             </Card>
 
-            {/* 🔹 Modal for Product Selection */}
+            {/* 🔹 Modal for product selection */}
             <Modal
                 opened={modalOpened}
                 onClose={() => setModalOpened(false)}
@@ -293,16 +350,14 @@ export default function ChatPage() {
                             }}
                         >
                             <Group>
-                                <Image
-                                    src={product.imageUrl}
-                                    width={50}
-                                    height={50}
-                                    radius="sm"
-                                />
+                                <Image src={product.imageUrl} width={50} height={50} radius="sm" />
                                 <Box>
-                                    <Text weight={500}>{product.name}</Text>
-                                    <Text size="sm" color="dimmed">
-                                        Size: {product.size}
+                                    <Text fw={500}>{product.name}</Text>
+                                    <Text size="sm" c="dimmed">
+                                        Price: IDR {product.price.toLocaleString()}
+                                    </Text>
+                                    <Text size="sm" c="dimmed">
+                                        Volume: {product.volume}
                                     </Text>
                                 </Box>
                             </Group>

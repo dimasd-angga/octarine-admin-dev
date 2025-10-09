@@ -214,6 +214,10 @@ export default function BannerEdit({ params }: { params: { id: string } }) {
         data={[
           { label: "Home Bottom", value: "HOME_BOTTOM" },
           { label: "Home Top", value: "HOME_TOP" },
+          { label: "Collection Men", value: "COLLECTION_MEN" },
+          { label: "Collection Women", value: "COLLECTION_WOMEN" },
+          { label: "Collection Unisex", value: "COLLECTION_UNISEX" },
+          { label: "Collection Segmented", value: "COLLECTION_SEGMENTED" },
         ]}
         required
         {...form.getInputProps("type")}

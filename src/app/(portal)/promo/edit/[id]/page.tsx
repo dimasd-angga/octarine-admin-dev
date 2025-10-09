@@ -12,7 +12,8 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { Edit, useForm } from "@refinedev/mantine";
+import { Edit } from "@refinedev/mantine";
+import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
 import { useOne, useUpdate } from "@refinedev/core";
 import { axiosInstance } from "@service/axiosInstance";

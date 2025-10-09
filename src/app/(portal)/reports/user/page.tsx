@@ -120,7 +120,7 @@ export default function UserReportsPage() {
                         <td>{row.sessions}</td>
                         <td>{avgSessions}</td>
                         <td>
-                          <Group gap="xs">
+                          <Group spacing="xs">
                             <Badge color="blue">New: {row.newUsers}</Badge>
                             <Badge color="green">
                               Returning: {row.returningUsers}
@@ -129,12 +129,12 @@ export default function UserReportsPage() {
                         </td>
                         <td>
                           {Number(engagementRate) > 30 ? (
-                            <Group gap="xs">
+                            <Group spacing="xs">
                               <Text c="green">{engagementRate}%</Text>
                               <IconTrendingUp size={16} color="green" />
                             </Group>
                           ) : (
-                            <Group gap="xs">
+                            <Group spacing="xs">
                               <Text c="red">{engagementRate}%</Text>
                               <IconTrendingDown size={16} color="red" />
                             </Group>
