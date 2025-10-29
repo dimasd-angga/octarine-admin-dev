@@ -11,20 +11,13 @@ import {
   Group,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useUpdate, useOne } from "@refinedev/core";
-import { useParams, useRouter } from "next/navigation";
+import { useCreate } from "@refinedev/core";
+import { useRouter } from "next/navigation";
+import { showNotification } from "@mantine/notifications";
 
-export default function FAQEditPage() {
+export default function FAQCreatePage() {
   const router = useRouter();
-  const params = useParams();
-  const id = params?.id as string;
-
-  const { data, isLoading } = useOne({
-    resource: "faq",
-    id,
-  });
-
-  const { mutate } = useUpdate();
+  const { mutate } = useCreate();
 
   const form = useForm({
     initialValues: {
@@ -32,40 +25,44 @@ export default function FAQEditPage() {
       question: "",
       answer: "",
     },
+    validate: {
+      category: (v) => (!v ? "Category is required" : null),
+      question: (v) => (!v ? "Question is required" : null),
+      answer: (v) => (!v ? "Answer is required" : null),
+    },
   });
 
-  React.useEffect(() => {
-    if (data?.data) {
-      form.setValues({
-        category: data.data.category,
-        question: data.data.question,
-        answer: data.data.answer,
-      });
-    }
-  }, [data]);
-
-  const handleSubmit = (values: typeof form.values) => {
+  const handleSubmit = (values) => {
     mutate(
       {
-        resource: "faq",
-        id,
+        resource: "faqs",
         values,
       },
       {
         onSuccess: () => {
-          router.push("/faq");
+          showNotification({
+            title: "Success",
+            message: "Faq created successfully",
+            color: "green",
+          });
+          router.push("/user-faq");
+        },
+        onError: (error) => {
+          showNotification({
+            title: "Error",
+            message: "Failed to create faq",
+            color: "red",
+          });
         },
       }
     );
   };
 
-  if (isLoading) return <p>Loading...</p>;
-
   return (
     <Container size="lg" mt="xl">
       <Card shadow="sm" p="xl" radius="md" withBorder>
         <Title order={2} mb="lg">
-          Edit FAQ
+          Create FAQ
         </Title>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -95,7 +92,7 @@ export default function FAQEditPage() {
           />
 
           <Group position="right" mt="md">
-            <Button type="submit">Update</Button>
+            <Button type="submit">Create</Button>
           </Group>
         </form>
       </Card>

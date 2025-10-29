@@ -8,12 +8,27 @@ import {
   Pagination,
   ScrollArea,
   Table,
+  Text,
 } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useInvalidate, useUpdate } from "@refinedev/core";
 import { EditButton, List } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef, flexRender } from "@tanstack/react-table";
 import React, { useState } from "react";
+
+const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
+  if (!column.getCanSort()) return null;
+  const sorted = column.getIsSorted();
+  return (
+    <Text
+      onClick={column.getToggleSortingHandler()}
+      style={{ cursor: "pointer" }}
+    >
+      {sorted === "asc" ? "↑" : sorted === "desc" ? "↓" : "↕"}
+    </Text>
+  );
+};
 
 export default function ArticleListPage() {
   const invalidate = useInvalidate();
@@ -47,6 +62,9 @@ export default function ArticleListPage() {
         id: "published",
         header: "Published",
         accessorKey: "published",
+        cell: function render({ getValue }) {
+          return <Text>{getValue() ? "Yes" : "No"}</Text>;
+        },
       },
       {
         id: "actions",
@@ -66,7 +84,13 @@ export default function ArticleListPage() {
               },
               {
                 onSuccess: () => {
-                  alert(`Article ${published ? "unpublish" : "publish"}`);
+                  showNotification({
+                    title: "Success",
+                    message: `Article ${
+                      published ? "unpublished" : "published"
+                    } successfully!`,
+                    color: "green",
+                  });
                   invalidate({
                     resource: "article/list",
                     invalidates: ["list"],
@@ -75,7 +99,13 @@ export default function ArticleListPage() {
                 },
                 onError: (error) => {
                   console.error("Publish Error:", error);
-                  alert("Publish failed");
+                  showNotification({
+                    title: "Error",
+                    message: `Failed to ${
+                      published ? "unpublish" : "publish"
+                    } article`,
+                    color: "red",
+                  });
                   setIsPublishing((prev) => ({ ...prev, [id]: false }));
                 },
               }
@@ -119,6 +149,9 @@ export default function ArticleListPage() {
         pageSize: 10,
         mode: "server",
       },
+      sorters: {
+        mode: "server",
+      },
     },
   });
 
@@ -139,6 +172,9 @@ export default function ArticleListPage() {
                             header.getContext()
                           )}
                         </Box>
+                        <Group spacing="xs" noWrap>
+                          <ColumnSorter column={header.column} />
+                        </Group>
                       </Group>
                     )}
                   </th>

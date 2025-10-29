@@ -7,6 +7,7 @@ import {
   Image,
   MultiSelect,
   Paper,
+  Select,
   Stack,
   Switch,
   Text,
@@ -14,8 +15,10 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { showNotification } from "@mantine/notifications";
 import {
   useCreate,
+  useList,
   useNavigation,
   useResource,
   useSelect,
@@ -36,6 +39,11 @@ export default function ArticleCreate() {
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { data: productDataPagination } = useList({
+    resource: "product/list",
+    pagination: { mode: "off" },
+  });
+  const productData = productDataPagination?.data ?? [];
 
   const form = useForm({
     initialValues: {
@@ -135,12 +143,20 @@ export default function ArticleCreate() {
       },
       {
         onSuccess: () => {
-          alert("Article created!");
+          showNotification({
+            title: "Success",
+            message: "Article created successfully!",
+            color: "green",
+          });
           list("article");
         },
         onError: (error) => {
           console.error("Upload Error:", error);
-          alert("Upload failed");
+          showNotification({
+            title: "Error",
+            message: "Failed to create article",
+            color: "red",
+          });
         },
       }
     );
@@ -187,12 +203,15 @@ export default function ArticleCreate() {
               </Group>
             )}
 
-            <TextInput
-              label="Product ID"
-              placeholder="Enter product ID (optional)"
-              mt="sm"
+            <Select
+              label="Product (optional)"
+              placeholder="Select product (optional)"
+              searchable
+              data={productData.map((p: any) => ({
+                value: p.id,
+                label: `${p.name}`,
+              }))}
               {...form.getInputProps("product")}
-              styles={{ label: { fontWeight: 500, color: "#1A1B1E" } }}
             />
 
             <TextInput

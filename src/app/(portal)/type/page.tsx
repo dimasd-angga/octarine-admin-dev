@@ -17,6 +17,7 @@ import { useTable } from "@refinedev/react-table";
 import { ColumnDef, flexRender } from "@tanstack/react-table";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { showNotification } from "@mantine/notifications";
 
 const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   if (!column.getCanSort()) return null;
@@ -31,17 +32,17 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function TypeListPage() {
   const invalidate = useInvalidate();
@@ -71,56 +72,59 @@ export default function TypeListPage() {
         header: "Description",
         accessorKey: "description",
       },
-      {
-        id: "enabled",
-        header: "Enabled",
-        accessorKey: "enabled",
-        cell: ({ row, getValue }) => {
-          const id = row.index + 1;
-          const { name, description } = row.original;
-          const enabled = getValue() as boolean;
+      // {
+      //   id: "enabled",
+      //   header: "Enabled",
+      //   accessorKey: "enabled",
+      //   cell: ({ row, getValue }) => {
+      //     const id = row.original.id!;
+      //     const enabled = getValue() as boolean;
 
-          const handleToggle = () => {
-            setIsUpdating((prev) => ({ ...prev, [id]: true }));
-            updateType(
-              {
-                resource: `product/type/${id.toString()}?enabled=${!enabled}`,
-                // id: id.toString(),
-                // values: {
-                //   enabled: !enabled,
-                //   name,
-                //   description,
-                // },
-                mutationMode: "optimistic",
-              },
-              {
-                onSuccess: () => {
-                  invalidate({
-                    resource: "product/type/list",
-                    invalidates: ["list"],
-                  });
-                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-                onError: () => {
-                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-              }
-            );
-          };
-
-          return (
-            <Group spacing="xs">
-              <Switch
-                checked={enabled}
-                onChange={handleToggle}
-                disabled={isUpdating[id]}
-              />
-              {isUpdating[id] && <LoadingOverlay visible />}
-            </Group>
-          );
-        },
-        enableColumnFilter: false,
-      },
+      //     const handleToggle = () => {
+      //       setIsUpdating((prev) => ({ ...prev, [id]: true }));
+      //       updateType(
+      //         {
+      //           resource: `product/type/:id/${enabled ? "disable" : "enable"}`,
+      //           id,
+      //           values: {},
+      //         },
+      //         {
+      //           onSuccess: () => {
+      //             invalidate({
+      //               resource: "product/type/list",
+      //               invalidates: ["list"],
+      //             });
+      //             showNotification({
+      //               title: "Success",
+      //               message: "Type updated successfully",
+      //               color: "green",
+      //             });
+      //             setIsUpdating((prev) => ({ ...prev, [id]: false }));
+      //           },
+      //           onError: (error) => {
+      //             showNotification({
+      //               title: "Error",
+      //               message: "Failed to update type",
+      //               color: "red",
+      //             });
+      //             setIsUpdating((prev) => ({ ...prev, [id]: false }));
+      //           },
+      //         }
+      //       );
+      //     };
+      //     return (
+      //       <Group spacing="xs">
+      //         <Switch
+      //           checked={enabled}
+      //           onChange={handleToggle}
+      //           disabled={isUpdating[id]}
+      //         />
+      //         {isUpdating[id] && <LoadingOverlay visible />}
+      //       </Group>
+      //     );
+      //   },
+      //   enableColumnFilter: false,
+      // },
       {
         id: "actions",
         header: "Actions",
@@ -129,18 +133,19 @@ export default function TypeListPage() {
           const id = row.original.id;
           return (
             <Group spacing="xs" noWrap>
-              <EditButton
-                hideText
-                recordItemId={id}
-                onClick={() => console.log("Redirect to:", `/type/edit/${id}`)} // Debugging
-              />
+              <EditButton hideText recordItemId={id} />
               <DeleteButton
                 hideText
                 recordItemId={id}
                 onSuccess={() => {
                   invalidate({
-                    resource: "voucher/list",
+                    resource: "product/type/list",
                     invalidates: ["list"],
+                  });
+                  showNotification({
+                    title: "Success",
+                    message: "Type deleted successfully",
+                    color: "green",
                   });
                 }}
               />
@@ -168,6 +173,7 @@ export default function TypeListPage() {
       pagination: {
         mode: "server",
       },
+      sorters: { mode: "server" },
     },
   });
 
@@ -190,7 +196,7 @@ export default function TypeListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}

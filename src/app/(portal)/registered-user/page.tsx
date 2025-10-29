@@ -1,9 +1,19 @@
 "use client";
 
-import { Box, Group, Pagination, ScrollArea, Table, Text, Button } from "@mantine/core";
+import {
+  Box,
+  Group,
+  Pagination,
+  ScrollArea,
+  Table,
+  Text,
+  Button,
+} from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useInvalidate, useNavigation, useUpdate } from "@refinedev/core";
-import { DeleteButton, List } from "@refinedev/mantine";
+import { DeleteButton, EditButton, List } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
+import { IconTrash } from "@tabler/icons-react";
 import { ColumnDef, flexRender } from "@tanstack/react-table";
 import React, { useState } from "react";
 
@@ -20,17 +30,17 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function UserListPage() {
   const invalidate = useInvalidate();
@@ -45,39 +55,52 @@ export default function UserListPage() {
       { id: "lastName", header: "Last Name", accessorKey: "lastName" },
       { id: "email", header: "Email", accessorKey: "email" },
       { id: "phoneNumber", header: "Phone Number", accessorKey: "phoneNumber" },
-      {
-        id: "status",
-        header: "Status",
-        accessorKey: "status",
-        cell: ({ getValue }) => {
-          const status = getValue() as string;
-          return status === "BLOCKED" ? "🚫 Blocked" : "✅ Active";
-        },
-      },
+      // {
+      //   id: "status",
+      //   header: "Status",
+      //   accessorKey: "status",
+      //   cell: ({ getValue }) => {
+      //     const status = getValue() as string;
+      //     return status === "BLOCKED" ? "🚫 Blocked" : "✅ Active";
+      //   },
+      // },
       {
         id: "actions",
         header: "Actions",
         accessorKey: "id",
         cell: ({ row }) => {
           const user = row.original;
-          const isBlocked = user.status === "BLOCKED";
+          const id = user.id;
+          const isBlocked = user.status === "ENABLE";
 
-          const toggleBlock = () => {
-            setIsUpdating((prev) => ({ ...prev, [user.id]: true }));
+          const handleToggle = () => {
+            setIsUpdating((prev) => ({ ...prev, [id]: true }));
             updateUser(
               {
-                resource: "users",
-                id: user.id.toString(),
-                values: { status: isBlocked ? "ACTIVE" : "BLOCKED" },
-                mutationMode: "optimistic",
+                resource: `users/:id/${isBlocked ? "enable" : "disable"}`,
+                id,
+                values: {},
               },
               {
                 onSuccess: () => {
-                  invalidate({ resource: "users", invalidates: ["list"] });
-                  setIsUpdating((prev) => ({ ...prev, [user.id]: false }));
+                  invalidate({
+                    resource: "users",
+                    invalidates: ["list"],
+                  });
+                  showNotification({
+                    title: "Success",
+                    message: "User updated successfully",
+                    color: "green",
+                  });
+                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
                 },
-                onError: () => {
-                  setIsUpdating((prev) => ({ ...prev, [user.id]: false }));
+                onError: (error) => {
+                  showNotification({
+                    title: "Error",
+                    message: "Failed to update user",
+                    color: "red",
+                  });
+                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
                 },
               }
             );
@@ -92,23 +115,30 @@ export default function UserListPage() {
               >
                 View Details
               </Button>
+              <EditButton hideText recordItemId={user.id} />
               <Button
                 size="xs"
                 variant={isBlocked ? "light" : "outline"}
                 color={isBlocked ? "green" : "red"}
-                onClick={toggleBlock}
+                onClick={handleToggle}
                 loading={isUpdating[user.id]}
               >
-                {isBlocked ? "Unblock" : "Block"}
+                {/* {isBlocked ? "Unblock" : "Block"} */}
+                <IconTrash size={16} />
               </Button>
-              <DeleteButton
+              {/* <DeleteButton
                 hideText
                 recordItemId={user.id}
                 resource="users"
                 onSuccess={() => {
                   invalidate({ resource: "users", invalidates: ["list"] });
+                  showNotification({
+                    title: "Success",
+                    message: "User deleted successfully",
+                    color: "green",
+                  });
                 }}
-              />
+              /> */}
             </Group>
           );
         },
@@ -126,12 +156,16 @@ export default function UserListPage() {
     refineCoreProps: {
       resource: "users",
       pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" },
+      meta: {
+        enabled: false,
+      },
     },
   });
 
   return (
     <ScrollArea>
-      <List title="Registered Users">
+      <List>
         <Table highlightOnHover>
           <thead>
             {getHeaderGroups().map((headerGroup) => (
@@ -148,7 +182,7 @@ export default function UserListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}

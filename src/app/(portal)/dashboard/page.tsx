@@ -93,7 +93,7 @@ export default function Dashboard() {
               Total Revenue
             </Text>
             <Text weight={600} color="green">
-              ${data.totalRevenue?.toLocaleString()}
+              IDR {data.totalRevenue?.toLocaleString()}
             </Text>
           </div>
           <div>
@@ -199,7 +199,7 @@ export default function Dashboard() {
                   <tr key={p.id}>
                     <td>{p.name}</td>
                     <td>{p.sold}</td>
-                    <td>${revenue.toLocaleString()}</td>
+                    <td>IDR {revenue.toLocaleString()}</td>
                     <td>
                       <Badge color={p.stock < 10 ? "red" : "green"}>
                         {p.stock ?? 0}
@@ -210,7 +210,7 @@ export default function Dashboard() {
                         <div
                           style={{
                             height: 6,
-                            width: `${percent}%`,
+                            width: `IDR {percent}%`,
                             backgroundColor: "#228be6",
                             borderRadius: 4,
                           }}

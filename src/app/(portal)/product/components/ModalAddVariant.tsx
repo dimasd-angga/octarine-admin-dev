@@ -20,6 +20,7 @@ interface IVariant {
   productId: number;
   volume: number;
   price: number;
+  point: number;
   image?: string;
   enabled: boolean;
   createdAt?: string;
@@ -49,11 +50,13 @@ export default function AddVariantModal({
       productId: 0,
       volume: 0,
       price: 0,
+      point: 0,
       enabled: true,
     },
     validate: {
       volume: (value) => (value < 0 ? "Volume cannot be negative" : null),
       price: (value) => (value < 0 ? "Price cannot be negative" : null),
+      point: (value) => (value < 0 ? "Price cannot be negative" : null),
     },
   });
 
@@ -71,6 +74,7 @@ export default function AddVariantModal({
               productId: productId,
               volume: values.volume,
               price: values.price,
+              point: values.point,
               enabled: values.enabled,
             }),
           ],
@@ -137,8 +141,19 @@ export default function AddVariantModal({
             }
             hideControls
           />
-
-          <Switch
+          <NumberInput
+            label="Point"
+            placeholder="Enter point"
+            min={0}
+            {...addVariantForm.getInputProps("point")}
+            error={
+              addVariantForm.errors.point && (
+                <span>{addVariantForm.errors.point}</span>
+              )
+            }
+            hideControls
+          />
+          {/* <Switch
             label="Enabled"
             checked={addVariantForm.values.enabled}
             onChange={(event) =>
@@ -147,7 +162,7 @@ export default function AddVariantModal({
                 event.currentTarget.checked
               )
             }
-          />
+          /> */}
           <FileInput
             label="Files"
             multiple

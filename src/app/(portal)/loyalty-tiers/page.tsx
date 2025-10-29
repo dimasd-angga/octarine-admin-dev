@@ -21,17 +21,17 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function LoyaltyTiersListPage() {
   const invalidate = useInvalidate();
@@ -58,7 +58,7 @@ export default function LoyaltyTiersListPage() {
               recordItemId={getValue() as number}
               onSuccess={() => {
                 invalidate({
-                  resource: "admin/loyalty-tiers/list",
+                  resource: "loyalty-tiers/list",
                   invalidates: ["list"],
                 });
               }}
@@ -84,6 +84,7 @@ export default function LoyaltyTiersListPage() {
     refineCoreProps: {
       resource: "loyalty-tiers/list",
       pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" },
     },
   });
 
@@ -106,7 +107,7 @@ export default function LoyaltyTiersListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}

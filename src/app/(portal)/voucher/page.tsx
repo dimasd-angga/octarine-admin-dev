@@ -8,15 +8,21 @@ import {
   ScrollArea,
   Table,
   Text,
-  Switch,
+  Button,
+  Modal,
+  TextInput,
   LoadingOverlay,
+  Select,
+  SelectItem,
 } from "@mantine/core";
-import { useInvalidate, useUpdate } from "@refinedev/core";
+import { showNotification } from "@mantine/notifications";
+import { useCreate, useInvalidate, useList, useUpdate } from "@refinedev/core";
 import { DeleteButton, EditButton, List } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef, flexRender } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { useDisclosure } from "@mantine/hooks";
 
 const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   if (!column.getCanSort()) return null;
@@ -31,101 +37,103 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
-
 export default function VoucherListPage() {
   const invalidate = useInvalidate();
+  const { mutate: postVoucher } = useCreate();
   const { mutate: updateVoucher } = useUpdate();
-  const router = useRouter();
+
+  const { data: userDataPagination } = useList({
+    resource: "users",
+    pagination: { mode: "off" },
+  });
+  const userData = userDataPagination?.data ?? [];
 
   const [isUpdating, setIsUpdating] = useState<{ [key: number]: boolean }>({});
+
+  // Modal states for assigning user
+  const [opened, { open, close }] = useDisclosure(false);
+  const [selectedVoucherId, setSelectedVoucherId] = useState<number | null>(
+    null
+  );
+  const [userIdentifier, setUserIdentifier] = useState("");
 
   const columns = React.useMemo<ColumnDef<IVoucher>[]>(
     () => [
       { id: "id", header: "ID", accessorKey: "id" },
-      {
-        id: "code",
-        header: "Code",
-        accessorKey: "code",
-        meta: { filterOperator: "contains" },
-      },
+      { id: "code", header: "Code", accessorKey: "code" },
       { id: "name", header: "Name", accessorKey: "name" },
+      { id: "description", header: "Description", accessorKey: "description" },
+      { id: "type", header: "Type", accessorKey: "type" },
+      { id: "status", header: "Status", accessorKey: "status" },
       {
-        id: "status",
-        header: "Enabled",
-        accessorKey: "enabled",
-        cell: ({ row, getValue }) => {
-          const id = row.original.id as number;
-          const status = row.original.status as string;
-
-          const handleToggle = () => {
-            updateVoucher(
-              {
-                resource: `voucher`,
-                id: `${id}/${
-                  status.toLowerCase() === "active" ? "disable" : "enable"
-                }`,
-                values: {},
-                mutationMode: "optimistic",
-              },
-              {
-                onSuccess: () => {
-                  invalidate({
-                    resource: "voucher/list",
-                    invalidates: ["list"],
-                  });
-                  // setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-                onError: () => {
-                  // setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-              }
-            );
-          };
-
-          const isChecked: boolean = status.toLowerCase() === "active";
-          return (
-            <Group spacing="xs">
-              <Switch
-                checked={isChecked}
-                onChange={handleToggle}
-                disabled={isUpdating[id]}
-              />
-              {isUpdating[id] && <LoadingOverlay visible />}
-            </Group>
-          );
-        },
-        enableColumnFilter: false,
+        id: "discountValue",
+        header: "Discount Value",
+        accessorKey: "discountValue",
       },
+      {
+        id: "maxDiscountAmount",
+        header: "Max Discount",
+        accessorKey: "maxDiscountAmount",
+      },
+      {
+        id: "minOrderAmount",
+        header: "Min Order",
+        accessorKey: "minOrderAmount",
+      },
+      { id: "validFrom", header: "Valid From", accessorKey: "validFrom" },
+      { id: "validUntil", header: "Valid Until", accessorKey: "validUntil" },
+      { id: "usageLimit", header: "Usage Limit", accessorKey: "usageLimit" },
+      { id: "usedCount", header: "Used Count", accessorKey: "usedCount" },
+      {
+        id: "restricted",
+        header: "Restricted",
+        accessorKey: "restricted",
+        cell: ({ getValue }) => (getValue() ? "Yes" : "No"),
+      },
+      {
+        id: "assignedUserCount",
+        header: "Assigned Users",
+        accessorKey: "assignedUserCount",
+      },
+      { id: "createdAt", header: "Created At", accessorKey: "createdAt" },
+      { id: "modifiedAt", header: "Modified At", accessorKey: "modifiedAt" },
       {
         id: "actions",
         header: "Actions",
         accessorKey: "id",
-        cell: ({ getValue }) => (
-          <Group spacing="xs" noWrap>
-            <EditButton hideText recordItemId={getValue() as number} />
-            <DeleteButton
-              hideText
-              recordItemId={getValue() as number}
-              onSuccess={() => {
-                invalidate({
-                  resource: "voucher/list",
-                  invalidates: ["list"],
-                });
-              }}
-            />
-          </Group>
-        ),
+        cell: ({ getValue }) => {
+          const id = getValue() as number;
+          return (
+            <Group spacing="xs" noWrap>
+              <EditButton hideText recordItemId={id} />
+              <DeleteButton
+                hideText
+                recordItemId={id}
+                onSuccess={() => {
+                  showNotification({
+                    title: "Success",
+                    message: "Voucher deleted successfully",
+                    color: "green",
+                  });
+                  invalidate({
+                    resource: "voucher/list",
+                    invalidates: ["list"],
+                  });
+                }}
+              />
+              <Button
+                size="xs"
+                variant="light"
+                onClick={() => {
+                  setSelectedVoucherId(id);
+                  open();
+                }}
+              >
+                Assign
+              </Button>
+            </Group>
+          );
+        },
       },
     ],
     []
@@ -134,68 +142,154 @@ export default function VoucherListPage() {
   const {
     getHeaderGroups,
     getRowModel,
-    refineCore: {
-      setCurrent,
-      pageCount,
-      current,
-      tableQuery: { data: tableData },
-    },
+    refineCore: { setCurrent, pageCount, current },
   } = useTable({
     columns,
     refineCoreProps: {
       resource: "voucher/list",
       pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" },
     },
   });
 
   return (
-    <ScrollArea>
-      <List>
-        <Table highlightOnHover>
-          <thead>
-            {getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th key={header.id}>
-                    {!header.isPlaceholder && (
-                      <Group spacing="xs" noWrap>
-                        <Box>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </Box>
-                        <Group spacing="xs" noWrap>
-                          <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
-                        </Group>
-                      </Group>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {getRowModel().rows.map((row) => (
-              <tr key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-        <br />
-        <Pagination
-          position="right"
-          total={pageCount}
-          page={current}
-          onChange={setCurrent}
+    <>
+      {/* Assign Voucher Modal */}
+      <Modal
+        opened={opened}
+        onClose={close}
+        title="Assign Voucher to User"
+        centered
+      >
+        <Select
+          label="User"
+          placeholder="Select user"
+          className="form-group"
+          required
+          data={userData.map(
+            (u) =>
+              ({
+                value: u.id,
+                label: u.name || u.email,
+              } as SelectItem)
+          )}
+          value={userIdentifier}
+          onChange={(value) => setUserIdentifier(value!)}
         />
-      </List>
-    </ScrollArea>
+        <Group position="right" mt="md">
+          <Button variant="default" onClick={close}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              if (!selectedVoucherId || !userIdentifier) {
+                showNotification({
+                  title: "Error",
+                  message: "Please provide a valid user ID or email.",
+                  color: "red",
+                });
+                return;
+              }
+
+              setIsUpdating((prev) => ({ ...prev, [selectedVoucherId]: true }));
+
+              postVoucher(
+                {
+                  resource: `voucher/assign`,
+                  values: {
+                    voucherId: selectedVoucherId,
+                    userIds: [userIdentifier],
+                  },
+                },
+                {
+                  onSuccess: () => {
+                    showNotification({
+                      title: "Success",
+                      message: `Voucher assigned to user: ${userIdentifier}`,
+                      color: "green",
+                    });
+                    invalidate({
+                      resource: "voucher/list",
+                      invalidates: ["list"],
+                    });
+                    setUserIdentifier("");
+                    close();
+                    setIsUpdating((prev) => ({
+                      ...prev,
+                      [selectedVoucherId!]: false,
+                    }));
+                  },
+                  onError: () => {
+                    showNotification({
+                      title: "Error",
+                      message: "Failed to assign voucher.",
+                      color: "red",
+                    });
+                    setIsUpdating((prev) => ({
+                      ...prev,
+                      [selectedVoucherId!]: false,
+                    }));
+                  },
+                }
+              );
+            }}
+          >
+            Assign
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* Voucher List Table */}
+      <ScrollArea>
+        <List>
+          <Table highlightOnHover>
+            <thead>
+              {getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id}>
+                      {!header.isPlaceholder && (
+                        <Group spacing="xs" noWrap>
+                          <Box>
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </Box>
+                          <Group spacing="xs" noWrap>
+                            <ColumnSorter column={header.column} />
+                          </Group>
+                        </Group>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {getRowModel().rows.map((row) => (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          <br />
+          <Pagination
+            position="right"
+            total={pageCount}
+            page={current}
+            onChange={setCurrent}
+          />
+        </List>
+      </ScrollArea>
+    </>
   );
 }

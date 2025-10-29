@@ -11,6 +11,7 @@ import {
   Table,
   Text,
 } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useInvalidate, useUpdate } from "@refinedev/core";
 import { DeleteButton, EditButton, List, ShowButton } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
@@ -30,17 +31,17 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function CareerListPage() {
   const invalidate = useInvalidate();
@@ -73,65 +74,59 @@ export default function CareerListPage() {
         header: "Responsibilities",
         accessorKey: "responsibilities",
       },
-      {
-        id: "enabled",
-        header: "Enabled",
-        accessorKey: "enabled",
-        cell: ({ row, getValue }) => {
-          const id = row.original.id;
-          const {
-            department,
-            title,
-            location,
-            employmentType,
-            responsibilities,
-          } = row.original;
-          const enabled = getValue() as boolean;
+      // {
+      //   id: "enabled",
+      //   header: "Enabled",
+      //   accessorKey: "enabled",
+      //   cell: ({ row, getValue }) => {
+      //     const id = row.original.id;
+      //     const enabled = getValue() as boolean;
 
-          const handleToggle = () => {
-            setIsUpdating((prev) => ({ ...prev, [id]: true }));
-            updateCareer(
-              {
-                resource: "career",
-                id: id.toString(),
-                values: {
-                  enabled: !enabled,
-                  department,
-                  title,
-                  location,
-                  employmentType,
-                  responsibilities,
-                },
-                mutationMode: "optimistic", // Optimistic update for better UX
-              },
-              {
-                onSuccess: () => {
-                  invalidate({
-                    resource: "career/list",
-                    invalidates: ["list"],
-                  });
-                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-                onError: () => {
-                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-              }
-            );
-          };
-
-          return (
-            <Group spacing="xs">
-              <Switch
-                checked={enabled}
-                onChange={handleToggle}
-                disabled={isUpdating[id]}
-              />
-              {isUpdating[id] && <LoadingOverlay visible />}
-            </Group>
-          );
-        },
-        enableColumnFilter: false,
-      },
+      //     const handleToggle = () => {
+      //       setIsUpdating((prev) => ({ ...prev, [id]: true }));
+      //       updateCareer(
+      //         {
+      //           resource: `career/:id/${enabled ? "disable" : "enable"}`,
+      //           id,
+      //           values: {},
+      //         },
+      //         {
+      //           onSuccess: () => {
+      //             invalidate({
+      //               resource: "career/list",
+      //               invalidates: ["list"],
+      //             });
+      //             showNotification({
+      //               title: "Success",
+      //               message: "Career updated successfully",
+      //               color: "green",
+      //             });
+      //             setIsUpdating((prev) => ({ ...prev, [id]: false }));
+      //           },
+      //           onError: (error) => {
+      //             showNotification({
+      //               title: "Error",
+      //               message: "Failed to update career",
+      //               color: "red",
+      //             });
+      //             setIsUpdating((prev) => ({ ...prev, [id]: false }));
+      //           },
+      //         }
+      //       );
+      //     };
+      //     return (
+      //       <Group spacing="xs">
+      //         <Switch
+      //           checked={enabled}
+      //           onChange={handleToggle}
+      //           disabled={isUpdating[id]}
+      //         />
+      //         {isUpdating[id] && <LoadingOverlay visible />}
+      //       </Group>
+      //     );
+      //   },
+      //   enableColumnFilter: false,
+      // },
       {
         id: "actions",
         header: "Actions",
@@ -148,6 +143,11 @@ export default function CareerListPage() {
                   invalidate({
                     resource: "career/list",
                     invalidates: ["list"],
+                  });
+                  showNotification({
+                    title: "Success",
+                    message: "Career deleted successfully",
+                    color: "green",
                   });
                 }}
               />
@@ -176,6 +176,9 @@ export default function CareerListPage() {
         pageSize: 10,
         mode: "server",
       },
+      sorters: {
+        mode: "server",
+      },
     },
   });
 
@@ -198,7 +201,7 @@ export default function CareerListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Group, Pagination, ScrollArea, Table, Text } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useInvalidate } from "@refinedev/core";
 import { DeleteButton, EditButton, List } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
@@ -20,19 +21,17 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() =>
-        column.setFilterValue((old: string) => (old ? "" : " "))
-      }
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function FAQListPage() {
   const invalidate = useInvalidate();
@@ -52,18 +51,24 @@ export default function FAQListPage() {
         accessorKey: "question",
       },
       {
+        id: "answer",
+        header: "Answer",
+        accessorKey: "answer",
+        cell: ({ getValue }) => (
+          <Text lineClamp={2}>{getValue() as string}</Text>
+        ),
+      },
+      {
         id: "createdAt",
         header: "Created At",
         accessorKey: "createdAt",
-        cell: ({ getValue }) =>
-          new Date(getValue() as string).toLocaleString(),
+        cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(),
       },
       {
         id: "updatedAt",
         header: "Updated At",
         accessorKey: "updatedAt",
-        cell: ({ getValue }) =>
-          new Date(getValue() as string).toLocaleString(),
+        cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(),
       },
       {
         id: "actions",
@@ -77,8 +82,13 @@ export default function FAQListPage() {
               recordItemId={getValue() as number}
               onSuccess={() => {
                 invalidate({
-                  resource: "user-faq",
+                  resource: "faqs",
                   invalidates: ["list"],
+                });
+                showNotification({
+                  title: "Success",
+                  message: "FAQ deleted successfully.",
+                  color: "green",
                 });
               }}
             />
@@ -96,8 +106,9 @@ export default function FAQListPage() {
   } = useTable({
     columns,
     refineCoreProps: {
-      resource: "faq",
+      resource: "faqs",
       pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" },
     },
   });
 
@@ -120,7 +131,7 @@ export default function FAQListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}
@@ -134,10 +145,7 @@ export default function FAQListPage() {
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>

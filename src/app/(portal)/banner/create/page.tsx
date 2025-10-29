@@ -12,13 +12,13 @@ import {
   Textarea,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { showNotification } from "@mantine/notifications";
 import { useCreate, useNavigation, useResource } from "@refinedev/core";
 import { useEffect, useState } from "react";
 
 export default function BannerCreate() {
   const { mutate, isLoading } = useCreate();
   const { list } = useNavigation();
-  const { resource } = useResource();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -83,12 +83,20 @@ export default function BannerCreate() {
       },
       {
         onSuccess: () => {
-          alert("Banner created!");
-          list("admin/banner/list");
+          showNotification({
+            title: "Success",
+            message: "Banner created successfully!",
+            color: "green",
+          });
+          list("banner");
         },
         onError: (error) => {
-          console.error("Upload Error:", error);
-          alert("Upload failed");
+          console.error("Create failed:", error);
+          showNotification({
+            title: "Error",
+            message: "Failed to create banner",
+            color: "red",
+          });
         },
       }
     );
@@ -155,7 +163,7 @@ export default function BannerCreate() {
         {...form.getInputProps("type")}
       />
 
-      <Text size="sm" mt="md">
+      {/* <Text size="sm" mt="md">
         Enabled
       </Text>
       <Switch
@@ -165,7 +173,7 @@ export default function BannerCreate() {
           form.setFieldValue("enabled", event.currentTarget.checked)
         }
         mt="md"
-      />
+      /> */}
 
       <Group mt="md">
         <Button type="submit" loading={isLoading}>

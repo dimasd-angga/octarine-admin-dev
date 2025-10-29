@@ -1,6 +1,8 @@
 "use client";
 
 import { Select, Text, TextInput } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
+import { useNavigation } from "@refinedev/core";
 import { Create, useForm } from "@refinedev/mantine";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
@@ -10,6 +12,8 @@ const ReactQuill = dynamic(() => import("react-quill"), {
 });
 
 const CareerCreate: React.FC = () => {
+  const { list } = useNavigation();
+
   const { saveButtonProps, getInputProps, values, setFieldValue, errors } =
     useForm({
       initialValues: {
@@ -20,8 +24,20 @@ const CareerCreate: React.FC = () => {
       },
       refineCoreProps: {
         resource: "career/create",
-        onMutationSuccess: (data) => {
-          console.log("Data tersimpan:", data);
+        onMutationSuccess() {
+          showNotification({
+            title: "Success",
+            message: "Career created successfully!",
+            color: "green",
+          });
+          list("career");
+        },
+        onMutationError() {
+          showNotification({
+            title: "Error",
+            message: "Failed to create career",
+            color: "red",
+          });
         },
       },
       validate: {

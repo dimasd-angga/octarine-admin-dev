@@ -6,7 +6,6 @@ import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 import routerProvider from "@refinedev/nextjs-router";
 import React, { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-
 import { Global, MantineProvider } from "@mantine/core";
 import { NotificationsProvider } from "@mantine/notifications";
 import {
@@ -37,7 +36,11 @@ import {
   IconFlagQuestion,
   IconUserCheck,
   IconHeadset,
+  IconArticle,
+  IconMessage,
+  IconListCheck,
 } from "@tabler/icons-react";
+import "@styles/global.css";
 
 import { authProvider } from "@providers/auth-provider";
 import { dataProvider } from "@providers/data-provider";
@@ -84,16 +87,35 @@ export default function RootLayout({
       },
     },
     {
+      name: "article-management",
+      list: "/article-management",
+      meta: {
+        label: "Article Management",
+        icon: <IconFileText />,
+      },
+    },
+    {
       name: "article",
       list: "/article",
       create: "/article/create",
       edit: "/article/edit/:id",
+      parentName: "article-management",
       meta: {
-        label: "Article Management",
+        label: "Article",
         canDelete: true,
-        icon: <IconFileText />,
+        icon: <IconArticle />,
       },
     },
+    // {
+    //   name: "comment",
+    //   list: "/comment",
+    //   parentName: "article-management",
+    //   meta: {
+    //     label: "Comment",
+    //     canDelete: true,
+    //     icon: <IconMessage />,
+    //   },
+    // },
     {
       name: "product",
       list: "/product",
@@ -123,7 +145,7 @@ export default function RootLayout({
       meta: {
         label: "Order",
         canDelete: true,
-        icon: <IconShoppingCart />,
+        icon: <IconListCheck />,
       },
     },
     {
@@ -202,6 +224,7 @@ export default function RootLayout({
       name: "registered-user",
       list: "/registered-user",
       show: "/registered-user/show/:id",
+      edit: "/registered-user/edit/:id",
       parentName: "user-management",
       meta: {
         label: "Registered Users",

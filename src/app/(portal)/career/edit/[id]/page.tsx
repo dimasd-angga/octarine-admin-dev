@@ -1,11 +1,15 @@
 "use client";
 
 import { Select, Text, TextInput } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
+import { useNavigation } from "@refinedev/core";
 import { Edit, useForm } from "@refinedev/mantine";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 const CareerEdit = () => {
+  const { list } = useNavigation();
+
   const { saveButtonProps, getInputProps, values, setFieldValue, errors } =
     useForm({
       initialValues: {
@@ -22,6 +26,23 @@ const CareerEdit = () => {
           value.length <= 0 ? "Status is required" : null,
         responsibilities: (value) =>
           value.length < 10 ? "Too short conten " : null,
+      },
+      refineCoreProps: {
+        onMutationSuccess() {
+          showNotification({
+            title: "Success",
+            message: "Career updated successfully!",
+            color: "green",
+          });
+          list("career");
+        },
+        onMutationError() {
+          showNotification({
+            title: "Error",
+            message: "Failed to update career",
+            color: "red",
+          });
+        },
       },
     });
 

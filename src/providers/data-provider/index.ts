@@ -11,6 +11,7 @@ import {
   GetListParams,
   CreateParams,
   UpdateParams,
+  GetOneParams,
 } from "@refinedev/core";
 import { axiosInstance } from "@service/axiosInstance";
 
@@ -45,33 +46,48 @@ const generateFilter = (filters?: CrudFilters) => {
 
 export const dataProvider = (axios: AxiosInstance): DataProvider => ({
   ...dataProviderSimpleRest(API_URL, axios),
-  custom: async ({ url: resource, filters }) => {
+  custom: async ({ url: resource, filters, method = "get" }) => {
     const url = new URL(`${API_URL}/${resource}`);
     const queryFilters = generateFilter(filters);
     url.search = queryString.stringify({ ...queryFilters });
-    const { data } = await axiosInstance.get(url.toString());
+    const { data } = await axiosInstance[method](url.toString());
     return data;
   },
   getList: async <TData extends BaseRecord = BaseRecord>({
     resource,
     pagination,
     filters,
-    meta,
+    sorters,
   }: GetListParams) => {
     const url = new URL(`${API_URL}/${resource}`);
 
-    // Pagination
-    const current = pagination?.current || 1;
-    const pageSize = pagination?.pageSize || 10;
-
-    const queryFilters = generateFilter(filters);
-
-    const query = {
-      page: current.toString(),
-      size: pageSize.toString(),
+    let query: any = {
+      enabled: true,
     };
 
-    url.search = queryString.stringify({ ...query, ...queryFilters });
+    if (pagination?.mode != "off") {
+      // Pagination
+      const current = pagination?.current || 1;
+      const pageSize = pagination?.pageSize || 10;
+
+      const queryFilters = generateFilter(filters);
+
+      query = {
+        ...query,
+        ...queryFilters,
+        page: current.toString(),
+        size: pageSize.toString(),
+      };
+    }
+
+    if (sorters && sorters.length > 0) {
+      const sorter = sorters[0];
+      query = { ...query, soryBy: sorter.field, sortDir: sorter.order };
+    }
+
+    if (Object.keys(query).length > 0) {
+      url.search = queryString.stringify({ ...query });
+    }
 
     const { data } = await axiosInstance.get(url.toString());
 
@@ -87,6 +103,13 @@ export const dataProvider = (axios: AxiosInstance): DataProvider => ({
       return {
         data: data.content as TData[],
         total: data.page.totalElements as number,
+      };
+    }
+    // Handle paginated response v2
+    if (data.content && data.totalElements) {
+      return {
+        data: data.content as TData[],
+        total: data.totalElements as number,
       };
     }
 
@@ -122,20 +145,49 @@ export const dataProvider = (axios: AxiosInstance): DataProvider => ({
     variables,
     meta,
   }: UpdateParams<TVariables>) => {
-    const url = `${API_URL}/${resource}/${id}`;
-    const { headers } = meta ?? {};
-
-    const response = await axios.put(url, variables, {
-      headers: {
-        ...headers,
-        ...(variables instanceof FormData
-          ? { "Content-Type": "multipart/form-data" }
-          : { "Content-Type": "application/json" }),
-      },
-    });
+    let url = `${API_URL}/${resource}`;
+    if (id) {
+      if (resource.includes(":id")) {
+        url = url.replace(":id", id.toString());
+      } else {
+        url = url.concat(`/${id}`);
+      }
+    }
+    const { headers, operation = "put" } = meta ?? {};
+    let response = null;
+    switch (operation) {
+      case "post":
+        response = await axios.post(url, variables, {
+          headers: {
+            ...headers,
+            ...(variables instanceof FormData
+              ? { "Content-Type": "multipart/form-data" }
+              : { "Content-Type": "application/json" }),
+          },
+        });
+        break;
+      default:
+        response = await axios.put(url, variables, {
+          headers: {
+            ...headers,
+            ...(variables instanceof FormData
+              ? { "Content-Type": "multipart/form-data" }
+              : { "Content-Type": "application/json" }),
+          },
+        });
+        break;
+    }
 
     console.log("DataProvider update response:", response.data);
 
     return { data: response.data as TData };
+  },
+  getOne: async ({ resource, id }: GetOneParams) => {
+    let url = `${API_URL}/${resource}`;
+    if (id) {
+      url = url.concat(`/${id}`);
+    }
+    const { data } = await axiosInstance.get(url);
+    return { data };
   },
 });

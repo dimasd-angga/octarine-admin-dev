@@ -1,17 +1,24 @@
+// @interface/voucher.ts
+
 export interface IVoucher {
-  id?: number;
+  id: number;
   code: string;
   name: string;
   description: string;
-  type: "PERCENTAGE" | "FIXED_AMOUNT";
+  type: "PERCENTAGE" | "FIXED" | "OTHER";
+  status: "ACTIVE" | "INACTIVE" | "EXPIRED";
   discountValue: number;
   maxDiscountAmount: number;
   minOrderAmount: number;
-  validFrom: string;
-  validUntil: string;
+  validFrom: string; // ISO datetime
+  validUntil: string; // ISO datetime
   usageLimit: number;
-  enabled: boolean;
-  createdAt?: string;
-  modifiedAt?: string | null;
-  status: 'ACTIVE' | 'EXPIRED' | 'DISABLED';
+  usedCount: number;
+  restricted: boolean;
+  assignedUserCount: number;
+  deletedAt?: string | null;
+  createdAt: string;
+  createdBy: number;
+  modifiedAt: string;
+  modifiedBy: number;
 }

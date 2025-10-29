@@ -11,6 +11,7 @@ import {
   Table,
   Text,
 } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useInvalidate, useUpdate } from "@refinedev/core";
 import {
   DateField,
@@ -48,17 +49,17 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function BannerListPage() {
   const invalidate = useInvalidate();
@@ -99,81 +100,60 @@ export default function BannerListPage() {
         },
         enableColumnFilter: false,
       },
-      {
-        id: "enabled",
-        header: "Enabled",
-        accessorKey: "enabled",
-        cell: function render({ row, getValue }) {
-          const id = row.original.id;
-          const enabled = getValue() as boolean;
-          const {
-            title,
-            url,
-            createdAt,
-            createdBy,
-            modifiedAt,
-            modifiedBy,
-            imageObjectKey,
-          } = row.original;
+      // {
+      //   id: "enabled",
+      //   header: "Enabled",
+      //   accessorKey: "enabled",
+      //   cell: function render({ row, getValue }) {
+      //     const id = row.original.id;
+      //     const enabled = getValue() as boolean;
 
-          const handleToggle = () => {
-            setIsUpdating((prev) => ({ ...prev, [id]: true }));
-            const formData = new FormData();
-            formData.append(
-              "request",
-              new Blob(
-                [
-                  JSON.stringify({
-                    enabled: !enabled,
-                    title,
-                    url,
-                    createdAt,
-                    createdBy,
-                    modifiedAt,
-                    modifiedBy,
-                    imageObjectKey,
-                  }),
-                ],
-                { type: "application/json" }
-              )
-            );
+      //     const handleToggle = () => {
+      //       setIsUpdating((prev) => ({ ...prev, [id]: true }));
+      //       updateBanner(
+      //         {
+      //           resource: `banner/:id/${enabled ? "disable" : "enable"}`,
+      //           id,
+      //           values: {},
+      //         },
+      //         {
+      //           onSuccess: () => {
+      //             invalidate({
+      //               resource: "banner/list",
+      //               invalidates: ["list"],
+      //             });
+      //             showNotification({
+      //               title: "Success",
+      //               message: "Banner updated successfully",
+      //               color: "green",
+      //             });
+      //             setIsUpdating((prev) => ({ ...prev, [id]: false }));
+      //           },
+      //           onError: (error) => {
+      //             showNotification({
+      //               title: "Error",
+      //               message: "Failed to update banner",
+      //               color: "red",
+      //             });
+      //             setIsUpdating((prev) => ({ ...prev, [id]: false }));
+      //           },
+      //         }
+      //       );
+      //     };
 
-            updateBanner(
-              {
-                resource: "banner",
-                id: id.toString(),
-                values: formData,
-                mutationMode: "optimistic",
-              },
-              {
-                onSuccess: () => {
-                  invalidate({
-                    resource: "banner/list",
-                    invalidates: ["list"],
-                  });
-                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-                onError: (error) => {
-                  console.error("Update Error:", error);
-                  setIsUpdating((prev) => ({ ...prev, [id]: false }));
-                },
-              }
-            );
-          };
-
-          return (
-            <Group spacing="xs">
-              <Switch
-                checked={enabled}
-                onChange={handleToggle}
-                disabled={isUpdating[id]}
-              />
-              {isUpdating[id] && <LoadingOverlay visible />}
-            </Group>
-          );
-        },
-        enableColumnFilter: false,
-      },
+      //     return (
+      //       <Group spacing="xs">
+      //         <Switch
+      //           checked={enabled}
+      //           onChange={handleToggle}
+      //           disabled={isUpdating[id]}
+      //         />
+      //         {isUpdating[id] && <LoadingOverlay visible />}
+      //       </Group>
+      //     );
+      //   },
+      //   enableColumnFilter: false,
+      // },
       {
         id: "createdAt",
         header: "Created At",
@@ -196,6 +176,11 @@ export default function BannerListPage() {
                 hideText
                 recordItemId={getValue() as number}
                 onSuccess={() => {
+                  showNotification({
+                    title: "Success",
+                    message: "Banner deleted successfully!",
+                    color: "green",
+                  });
                   invalidate({
                     resource: "banner/list",
                     invalidates: ["list"],
@@ -227,6 +212,9 @@ export default function BannerListPage() {
         pageSize: 10,
         mode: "server",
       },
+      sorters: {
+        mode: "server",
+      },
     },
   });
 
@@ -249,7 +237,7 @@ export default function BannerListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}

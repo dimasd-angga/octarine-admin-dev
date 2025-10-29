@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   ActionIcon,
   Box,
@@ -10,64 +10,21 @@ import {
   ScrollArea,
   Table,
   Text,
-  Button,
+  Loader,
 } from "@mantine/core";
-import {
-  CreateButton,
-  DeleteButton,
-  EditButton,
-  List,
-} from "@refinedev/mantine";
+import { DeleteButton, EditButton, List } from "@refinedev/mantine";
 import { ColumnDef, flexRender } from "@tanstack/react-table";
 import { useTable } from "@refinedev/react-table";
+import { IconShieldLock } from "@tabler/icons-react";
 import {
-  IconPlus,
-  IconPencil,
-  IconTrash,
-  IconShieldLock,
-} from "@tabler/icons-react";
-
-// Dummy users data
-const users = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    role: "Admin",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Bob Smith",
-    email: "bob@example.com",
-    role: "Editor",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Charlie Davis",
-    email: "charlie@example.com",
-    role: "Viewer",
-    status: "Inactive",
-  },
-  {
-    id: 4,
-    name: "David Lee",
-    email: "david@example.com",
-    role: "Admin",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Emma Wilson",
-    email: "emma@example.com",
-    role: "Editor",
-    status: "Active",
-  },
-];
+  useInvalidate,
+  useList,
+  useUpdate,
+} from "@refinedev/core";
+import { showNotification } from "@mantine/notifications";
 
 // Column sorter
-const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
+const ColumnSorter = ({ column }) => {
   if (!column.getCanSort()) return null;
   const sorted = column.getIsSorted();
   return (
@@ -80,14 +37,57 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-export default function UserManagementListPage() {
-  const columns = React.useMemo<ColumnDef<any>[]>(
+export default function AdminUserList() {
+  const invalidate = useInvalidate();
+  const { mutate: updateRole } = useUpdate();
+
+  // ✅ Fetch roles from API using useList
+  const { data: rolesData, isLoading: rolesLoading } = useList({
+    resource: "staff/roles",
+    pagination: { mode: "off" },
+  });
+
+  const roles = rolesData?.data || [];
+
+  const handleChangeRole = (userId, roleName) => {
+    updateRole(
+      {
+        resource: "staff/:id/roles",
+        id: userId,
+        values: {
+          roleNames: [roleName],
+        },
+      },
+      {
+        onSuccess: () => {
+          invalidate({
+            resource: "staff",
+            invalidates: ["list"],
+          });
+          showNotification({
+            title: "Success",
+            message: `Role changed to "${roleName}"`,
+            color: "green",
+          });
+        },
+        onError: () => {
+          showNotification({
+            title: "Error",
+            message: "Failed to change role",
+            color: "red",
+          });
+        },
+      }
+    );
+  };
+
+  const columns = React.useMemo(
     () => [
       { id: "id", header: "ID", accessorKey: "id" },
-      { id: "name", header: "Name", accessorKey: "name" },
+      { id: "firstName", header: "First Name", accessorKey: "firstName" },
+      { id: "lastName", header: "Last Name", accessorKey: "lastName" },
       { id: "email", header: "Email", accessorKey: "email" },
-      { id: "role", header: "Role", accessorKey: "role" },
-      { id: "status", header: "Status", accessorKey: "status" },
+      { id: "roles", header: "Role", accessorKey: "roles.0.name" },
       {
         id: "actions",
         header: "Actions",
@@ -107,28 +107,42 @@ export default function UserManagementListPage() {
               <DeleteButton
                 hideText
                 recordItemId={user.id}
-                // resource="users"
-                onSuccess={() => {}}
+                onSuccess={() => {
+                  invalidate({
+                    resource: "staff",
+                    invalidates: ["list"],
+                  });
+                  showNotification({
+                    title: "Success",
+                    message: "Admin User deleted successfully",
+                    color: "green",
+                  });
+                }}
               />
 
-              {/* Assign Roles/Permissions */}
+              {/* Assign Role */}
               <Menu shadow="md" width={200}>
                 <Menu.Target>
                   <ActionIcon color="teal" variant="light">
                     <IconShieldLock size={16} />
                   </ActionIcon>
                 </Menu.Target>
+
                 <Menu.Dropdown>
-                  {["Admin", "Editor", "Viewer"].map((role) => (
-                    <Menu.Item
-                      key={role}
-                      onClick={() =>
-                        alert(`Assigned role "${role}" to ${user.name}`)
-                      }
-                    >
-                      {role}
-                    </Menu.Item>
-                  ))}
+                  {rolesLoading ? (
+                    <Group position="center" p="sm">
+                      <Loader size="xs" />
+                    </Group>
+                  ) : (
+                    roles.map((role) => (
+                      <Menu.Item
+                        key={role.id}
+                        onClick={() => handleChangeRole(user.id, role.name)}
+                      >
+                        {role.name.replace(/_/g, " ")}
+                      </Menu.Item>
+                    ))
+                  )}
                 </Menu.Dropdown>
               </Menu>
             </Group>
@@ -136,7 +150,7 @@ export default function UserManagementListPage() {
         },
       },
     ],
-    []
+    [roles, rolesLoading]
   );
 
   const {
@@ -145,8 +159,11 @@ export default function UserManagementListPage() {
     refineCore: { setCurrent, pageCount, current },
   } = useTable({
     columns,
-    data: users,
-    pageCount: Math.ceil(users.length / 10),
+    refineCoreProps: {
+      resource: "staff",
+      pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" }
+    },
   });
 
   return (
@@ -186,7 +203,6 @@ export default function UserManagementListPage() {
             ))}
           </tbody>
         </Table>
-
         <br />
         <Pagination
           position="right"

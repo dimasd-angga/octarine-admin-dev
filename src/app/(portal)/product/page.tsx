@@ -25,6 +25,7 @@ import { ColumnDef, flexRender } from "@tanstack/react-table";
 import React, { useState } from "react";
 import VariantModal from "./components/ModalVariant";
 import AddVariantModal from "./components/ModalAddVariant";
+import { showNotification } from "@mantine/notifications";
 
 // Interface untuk varian berdasarkan payload
 interface IVariant {
@@ -39,6 +40,19 @@ interface IVariant {
   modifiedAt?: string | null;
   modifiedById?: number | null;
 }
+
+const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
+  if (!column.getCanSort()) return null;
+  const sorted = column.getIsSorted();
+  return (
+    <Text
+      onClick={column.getToggleSortingHandler()}
+      style={{ cursor: "pointer" }}
+    >
+      {sorted === "asc" ? "↑" : sorted === "desc" ? "↓" : "↕"}
+    </Text>
+  );
+};
 
 export default function ProductListPage() {
   const invalidate = useInvalidate();
@@ -96,10 +110,55 @@ export default function ProductListPage() {
           return <Text>{date.toLocaleDateString()}</Text>;
         },
       },
+      // {
+      //   id: "enabled",
+      //   header: "Enabled",
+      //   accessorKey: "enabled",
+      //   cell: ({ row, getValue }) => {
+      //     const productId = row.original.id as number;
+      //     const enabled = getValue() as boolean;
+
+      //     const handleToggle = () => {
+      //       setIsUpdating((prev) => ({ ...prev, [productId]: true }));
+      //       updateProduct(
+      //         {
+      //           resource: "product",
+      //           id: productId.toString(),
+      //           values: { enabled: !enabled },
+      //           mutationMode: "optimistic",
+      //         },
+      //         {
+      //           onSuccess: () => {
+      //             invalidate({
+      //               resource: "product/list",
+      //               invalidates: ["list"],
+      //             });
+      //             setIsUpdating((prev) => ({ ...prev, [productId]: false }));
+      //           },
+      //           onError: () => {
+      //             setIsUpdating((prev) => ({ ...prev, [productId]: false }));
+      //           },
+      //         }
+      //       );
+      //     };
+
+      //     return (
+      //       <Group spacing="xs">
+      //         <Switch
+      //           checked={enabled}
+      //           onChange={handleToggle}
+      //           disabled={isUpdating[productId]}
+      //         />
+      //         {isUpdating[productId] && <LoadingOverlay visible />}
+      //       </Group>
+      //     );
+      //   },
+      //   enableColumnFilter: false,
+      // },
       {
-        id: "enabled",
-        header: "Enabled",
-        accessorKey: "enabled",
+        id: "bestSeller",
+        header: "Best Seller",
+        accessorKey: "bestSeller",
         cell: ({ row, getValue }) => {
           const productId = row.original.id as number;
           const enabled = getValue() as boolean;
@@ -108,13 +167,18 @@ export default function ProductListPage() {
             setIsUpdating((prev) => ({ ...prev, [productId]: true }));
             updateProduct(
               {
-                resource: "product",
+                resource: "product/:id/best-seller",
                 id: productId.toString(),
-                values: { enabled: !enabled },
+                values: { bestSeller: !enabled },
                 mutationMode: "optimistic",
               },
               {
                 onSuccess: () => {
+                  showNotification({
+                    title: "Success",
+                    message: "Product updated successfully",
+                    color: "green",
+                  });
                   invalidate({
                     resource: "product/list",
                     invalidates: ["list"],
@@ -122,6 +186,11 @@ export default function ProductListPage() {
                   setIsUpdating((prev) => ({ ...prev, [productId]: false }));
                 },
                 onError: () => {
+                  showNotification({
+                    title: "Error",
+                    message: "Failed to update product",
+                    color: "red",
+                  });
                   setIsUpdating((prev) => ({ ...prev, [productId]: false }));
                 },
               }
@@ -151,7 +220,21 @@ export default function ProductListPage() {
           return (
             <Group spacing="xs" noWrap>
               <EditButton hideText recordItemId={productId} />
-
+              <DeleteButton
+                hideText
+                recordItemId={getValue() as number}
+                onSuccess={() => {
+                  invalidate({
+                    resource: "product/list",
+                    invalidates: ["list"],
+                  });
+                  showNotification({
+                    title: "Success",
+                    message: "Product deleted successfully",
+                    color: "green",
+                  });
+                }}
+              />
               <Button
                 size="xs"
                 variant="outline"
@@ -197,6 +280,9 @@ export default function ProductListPage() {
         pageSize: 10,
         mode: "server",
       },
+      sorters: {
+        mode: "server",
+      },
     },
   });
 
@@ -217,6 +303,9 @@ export default function ProductListPage() {
                             header.getContext()
                           )}
                         </Box>
+                        <Group spacing="xs" noWrap>
+                          <ColumnSorter column={header.column} />
+                        </Group>
                       </Group>
                     )}
                   </th>

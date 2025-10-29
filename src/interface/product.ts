@@ -19,6 +19,7 @@ export interface IVariant {
   productId: number;
   volume: number;
   price: number;
+  point: number;
   image?: string;
   imageUrl?: string;
   enabled: boolean;

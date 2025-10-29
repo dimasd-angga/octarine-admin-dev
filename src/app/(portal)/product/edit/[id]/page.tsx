@@ -12,26 +12,26 @@ import {
   TextInput,
   Title,
   Text,
-  NumberInput,
   Stack,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useCreate, useNavigation, useResource } from "@refinedev/core";
+import { useUpdate, useNavigation, useResource, useOne } from "@refinedev/core";
 import { useEffect, useState } from "react";
-
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { showNotification } from "@mantine/notifications";
 
-const ReactQuill = dynamic(() => import("react-quill"), {
-  ssr: false,
-});
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
-export default function ProductCreatePage() {
-  const { mutate } = useCreate();
+export default function ProductEditPage() {
+  const route = useRouter();
+  const { id } = useParams();
+  const productId = Array.isArray(id) ? id[0] : id;
   const { list } = useNavigation();
   const { resource } = useResource();
+
+  const { mutate } = useUpdate();
 
   const [thumbnails, setThumbnails] = useState<File[]>([]);
   const [thumbnailPreviewUrls, setThumbnailPreviewUrls] = useState<string[]>(
@@ -39,6 +39,10 @@ export default function ProductCreatePage() {
   );
   const [files, setFiles] = useState<File[]>([]);
   const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
+  const { data: productData, isLoading } = useOne({
+    resource: "product",
+    id: productId,
+  });
 
   const form = useForm({
     initialValues: {
@@ -47,7 +51,7 @@ export default function ProductCreatePage() {
       storyBehind: "",
       enabled: true,
       genderPreference: "",
-      types: "",
+      types: [],
     },
     validate: {
       name: (value) =>
@@ -61,18 +65,35 @@ export default function ProductCreatePage() {
     },
   });
 
+  // 🟢 Prefill form when product data loads
+  useEffect(() => {
+    if (productData?.data) {
+      const data = productData.data;
+      form.setValues({
+        name: data.name || "",
+        description: data.description || "",
+        storyBehind: data.storyBehind || "",
+        enabled: data.enabled ?? true,
+        genderPreference: data.genderPreference || "",
+        types: data.types || [],
+      });
+
+      if (data.thumbnail) {
+        setThumbnailPreviewUrls([data.thumbnail]);
+      }
+      if (data.images) {
+        setFilePreviewUrls(data.images);
+      }
+    }
+  }, [productData]);
+
   const handleThumbnailChange = (selectedFiles: File[] | null) => {
     if (selectedFiles) {
       setThumbnails(selectedFiles);
-
-      thumbnailPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-      setThumbnailPreviewUrls([]);
-
       const urls = selectedFiles.map((file) => URL.createObjectURL(file));
       setThumbnailPreviewUrls(urls);
     } else {
       setThumbnails([]);
-      thumbnailPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
       setThumbnailPreviewUrls([]);
     }
   };
@@ -80,65 +101,35 @@ export default function ProductCreatePage() {
   const handleFilesChange = (selectedFiles: File[] | null) => {
     if (selectedFiles) {
       setFiles(selectedFiles);
-
-      filePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-      setFilePreviewUrls([]);
-
       const urls = selectedFiles.map((file) => URL.createObjectURL(file));
       setFilePreviewUrls(urls);
     } else {
       setFiles([]);
-      filePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
       setFilePreviewUrls([]);
     }
   };
 
-  useEffect(() => {
-    return () => {
-      thumbnailPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-      filePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [thumbnailPreviewUrls, filePreviewUrls]);
-
   const handleSubmit = (values: typeof form.values) => {
-    if (thumbnails.length === 0 || files.length === 0) {
-      alert("Please upload at least one thumbnail and one file.");
-      return;
-    }
-
-    const formData = new FormData();
-    thumbnails.forEach((file, index) => {
-      formData.append(`thumbnail`, file);
-    });
-    files.forEach((file, index) => {
-      formData.append(`files`, file);
-    });
-    formData.append(
-      "request",
-      new Blob([JSON.stringify(values)], {
-        type: "application/json",
-      })
-    );
-
     mutate(
       {
-        resource: "product/create",
-        values: formData,
+        resource: "product",
+        id: productId,
+        values,
       },
       {
         onSuccess: () => {
           showNotification({
             title: "Success",
-            message: "Product created successfully",
+            message: "Product updated successfully",
             color: "green",
           });
-          list("product/list");
+          list("product");
         },
         onError: (error) => {
-          console.error("Create Error:", error);
+          console.error("Update Error:", error);
           showNotification({
-            title: "Success",
-            message: "Failed to create product",
+            title: "Error",
+            message: "Failed to update product",
             color: "red",
           });
         },
@@ -150,27 +141,26 @@ export default function ProductCreatePage() {
     form.setFieldValue(field, value);
   };
 
-  const route = useRouter();
+  if (isLoading) return <Text>Loading product...</Text>;
 
   return (
     <Box sx={{ maxWidth: 600, margin: "auto", padding: "16px" }}>
       <Group position="apart" mb="sm">
-        <Title order={2}>Create Product</Title>
+        <Title order={2}>Edit Product</Title>
         <Button variant="outline" onClick={() => route.push("/product")}>
           Back to List
         </Button>
       </Group>
+
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <FileInput
           label="Thumbnails"
-          required
           multiple
           value={thumbnails}
           onChange={handleThumbnailChange}
           accept="image/*"
           mt="sm"
         />
-
         {thumbnailPreviewUrls.length > 0 && (
           <Group mt="sm" mb="sm">
             {thumbnailPreviewUrls.map((url, index) => (
@@ -190,14 +180,12 @@ export default function ProductCreatePage() {
 
         <FileInput
           label="Additional Files"
-          required
           multiple
           value={files}
           onChange={handleFilesChange}
           accept="*"
           mt="sm"
         />
-
         {filePreviewUrls.length > 0 && (
           <Group mt="sm" mb="sm">
             {filePreviewUrls.map((url, index) => (
@@ -221,8 +209,8 @@ export default function ProductCreatePage() {
           required
           mt="sm"
           {...form.getInputProps("name")}
-          error={form.errors.name && <span>{form.errors.name}</span>}
         />
+
         <Stack mt={12}>
           <Text>Description</Text>
           <ReactQuill
@@ -232,6 +220,7 @@ export default function ProductCreatePage() {
             style={{ background: "white" }}
           />
         </Stack>
+
         <Stack mt={12}>
           <Text>Story Behind</Text>
           <ReactQuill
@@ -241,6 +230,7 @@ export default function ProductCreatePage() {
             style={{ background: "white" }}
           />
         </Stack>
+
         {/* <Switch
           label="Enabled"
           checked={form.values.enabled}
@@ -249,6 +239,7 @@ export default function ProductCreatePage() {
           }
           mt="sm"
         /> */}
+
         <Select
           label="Gender Preference"
           placeholder="Select gender preference"
@@ -259,26 +250,22 @@ export default function ProductCreatePage() {
           ]}
           mt="sm"
           {...form.getInputProps("genderPreference")}
-          error={
-            form.errors.genderPreference && (
-              <span>{form.errors.genderPreference}</span>
-            )
-          }
         />
+
         <MultiSelect
           label="Type"
           placeholder="Select type preference"
           data={[
-            { value: "SPICES", label: "spices" },
-            { value: "VANILLA", label: "vanilla" },
-            { value: "FRUITS", label: "fruits" },
+            { value: "SPICES", label: "Spices" },
+            { value: "VANILLA", label: "Vanilla" },
+            { value: "FRUITS", label: "Fruits" },
           ]}
           mt="sm"
           {...form.getInputProps("types")}
-          error={form.errors.types && <span>{form.errors.types}</span>}
         />
+
         <Group mt="sm">
-          <Button type="submit">Submit</Button>
+          <Button type="submit">Update Product</Button>
         </Group>
       </form>
     </Box>

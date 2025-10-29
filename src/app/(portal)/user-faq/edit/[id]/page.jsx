@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Container,
   Card,
@@ -9,14 +9,27 @@ import {
   Textarea,
   Button,
   Group,
+  Loader,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useCreate } from "@refinedev/core";
-import { useRouter } from "next/navigation";
+import { useUpdate, useOne } from "@refinedev/core";
+import { useParams, useRouter } from "next/navigation";
+import { showNotification } from "@mantine/notifications";
 
-export default function FAQCreatePage() {
+export default function FAQEditPage() {
   const router = useRouter();
-  const { mutate } = useCreate();
+  const { id } = useParams();
+
+  const { mutate: updateFaq } = useUpdate();
+
+  const {
+    data: faqData,
+    isLoading,
+    isError,
+  } = useOne({
+    resource: `faqs`,
+    id,
+  });
 
   const form = useForm({
     initialValues: {
@@ -31,25 +44,65 @@ export default function FAQCreatePage() {
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
-    mutate(
+  useEffect(() => {
+    if (faqData?.data) {
+      const f = faqData.data;
+      form.setValues({
+        category: f.category,
+        question: f.question,
+        answer: f.answer,
+      });
+    }
+  }, [faqData]);
+
+  const handleSubmit = (values) => {
+    updateFaq(
       {
-        resource: "faq",
+        resource: `faqs`,
+        id,
         values,
       },
       {
         onSuccess: () => {
-          router.push("/faq");
+          showNotification({
+            title: "Success",
+            message: "FAQ updated successfully",
+            color: "green",
+          });
+          router.push("/user-faq");
+        },
+        onError: () => {
+          showNotification({
+            title: "Error",
+            message: "Failed to update FAQ",
+            color: "red",
+          });
         },
       }
     );
   };
 
+  if (isLoading)
+    return (
+      <Container size="lg" mt="xl">
+        <Loader />
+      </Container>
+    );
+
+  if (isError)
+    return (
+      <Container size="lg" mt="xl">
+        <Title order={4} color="red">
+          Failed to load FAQ.
+        </Title>
+      </Container>
+    );
+
   return (
     <Container size="lg" mt="xl">
       <Card shadow="sm" p="xl" radius="md" withBorder>
         <Title order={2} mb="lg">
-          Create FAQ
+          Edit FAQ
         </Title>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -79,7 +132,9 @@ export default function FAQCreatePage() {
           />
 
           <Group position="right" mt="md">
-            <Button type="submit">Create</Button>
+            <Button type="submit" color="blue">
+              Update FAQ
+            </Button>
           </Group>
         </form>
       </Card>

@@ -68,8 +68,12 @@ export default function PromoEditPage({ params }: { params: { id: string } }) {
         enabled: !!data.data.enabled,
         popup: !!data.data.popup,
         runningText: !!data.data.runningText,
-        startDate: data.data.startDate || "",
-        endDate: data.data.endDate || "",
+        startDate: data.data.startDate
+          ? new Date(data.data.startDate).toISOString().slice(0, 16)
+          : "",
+        endDate: data.data.endDate
+          ? new Date(data.data.endDate).toISOString().slice(0, 16)
+          : "",
       });
     }
   }, [data]);

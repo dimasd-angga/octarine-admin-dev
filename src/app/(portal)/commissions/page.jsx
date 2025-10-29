@@ -4,23 +4,21 @@ import React from "react";
 import {
   Box,
   Group,
-  Pagination,
   ScrollArea,
   Table,
   Text,
   Badge,
   Button,
+  Loader,
+  Center,
+  Pagination,
 } from "@mantine/core";
-import { useInvalidate, useUpdate } from "@refinedev/core";
+import { useInvalidate, useUpdate, useList } from "@refinedev/core";
 import { List } from "@refinedev/mantine";
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { ColumnDef, flexRender } from "@tanstack/react-table";
+import { useTable } from "@refinedev/react-table";
 
-const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
+const ColumnSorter = ({ column }) => {
   if (!column.getCanSort()) return null;
   const sorted = column.getIsSorted();
   return (
@@ -33,48 +31,23 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const dummyCommissions = [
-  {
-    id: 1,
-    affiliateName: "John Doe",
-    orderId: "ORD-1001",
-    amount: 120.5,
-    status: "pending",
-    createdAt: "2025-09-01T10:15:00Z",
-  },
-  {
-    id: 2,
-    affiliateName: "Jane Smith",
-    orderId: "ORD-1002",
-    amount: 200.0,
-    status: "approved",
-    createdAt: "2025-09-02T14:30:00Z",
-  },
-  {
-    id: 3,
-    affiliateName: "Michael Brown",
-    orderId: "ORD-1003",
-    amount: 75.25,
-    status: "paid",
-    createdAt: "2025-09-03T09:45:00Z",
-  },
-];
-
 export default function CommissionListPage() {
   const invalidate = useInvalidate();
-  const { mutate } = useUpdate();
 
-  const handleStatusChange = (id: number, status: string) => {
+  const { mutate, isPending: updating } = useUpdate();
+
+  const handleStatusChange = (id, status) => {
     mutate(
       {
-        resource: "affiliate-commissions",
-        id,
-        values: { status },
+        resource: "affiliates/commissions",
+        id: `${id}/status`,
+        values: { status: status.toUpperCase() },
+        meta: { method: "patch" },
       },
       {
         onSuccess: () => {
           invalidate({
-            resource: "affiliate-commissions",
+            resource: "affiliates/commissions",
             invalidates: ["list"],
           });
         },
@@ -82,37 +55,35 @@ export default function CommissionListPage() {
     );
   };
 
-  const columns = React.useMemo<ColumnDef<any>[]>(
+  const columns = React.useMemo(
     () => [
       { id: "id", header: "ID", accessorKey: "id" },
-      {
-        id: "affiliate",
-        header: "Affiliate",
-        accessorKey: "affiliateName",
-      },
-      {
-        id: "orderId",
-        header: "Order ID",
-        accessorKey: "orderId",
-      },
+      { id: "affiliate", header: "Affiliate", accessorKey: "affiliateName" },
+      { id: "orderId", header: "Order ID", accessorKey: "orderId" },
       {
         id: "amount",
-        header: "Amount ($)",
+        header: "Amount",
         accessorKey: "amount",
-        cell: ({ getValue }) => `$${(getValue() as number).toLocaleString()}`,
+        cell: ({ getValue }) => (
+          <Text fw={500}>
+            IDR {(getValue()).toLocaleString("id-ID")}
+          </Text>
+        ),
       },
       {
         id: "status",
         header: "Status",
         accessorKey: "status",
         cell: ({ getValue }) => {
-          const value = getValue() as string;
+          const value = (getValue())?.toUpperCase();
           const color =
-            value === "pending"
+            value === "PENDING"
               ? "yellow"
-              : value === "approved"
-              ? "blue"
-              : "green";
+              : value === "APPROVED"
+                ? "blue"
+                : value === "PAID"
+                  ? "green"
+                  : "gray";
           return <Badge color={color}>{value}</Badge>;
         },
       },
@@ -120,31 +91,34 @@ export default function CommissionListPage() {
         id: "createdAt",
         header: "Created At",
         accessorKey: "createdAt",
-        cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(),
+        cell: ({ getValue }) =>
+          new Date(getValue()).toLocaleString("id-ID"),
       },
       {
         id: "actions",
         header: "Actions",
         accessorKey: "id",
         cell: ({ getValue, row }) => {
-          const id = getValue() as number;
-          const status = row.original.status;
+          const id = getValue();
+          const status = (row.original.status || "").toUpperCase();
           return (
             <Group spacing="xs" noWrap>
-              {status === "pending" && (
+              {status === "PENDING" && (
                 <Button
                   size="xs"
                   color="blue"
-                  onClick={() => handleStatusChange(id, "approved")}
+                  loading={updating}
+                  onClick={() => handleStatusChange(id, "APPROVED")}
                 >
                   Approve
                 </Button>
               )}
-              {status === "approved" && (
+              {status === "APPROVED" && (
                 <Button
                   size="xs"
                   color="green"
-                  onClick={() => handleStatusChange(id, "paid")}
+                  loading={updating}
+                  onClick={() => handleStatusChange(id, "PAID")}
                 >
                   Mark as Paid
                 </Button>
@@ -154,31 +128,33 @@ export default function CommissionListPage() {
         },
       },
     ],
-    [invalidate]
+    [invalidate, updating]
   );
 
-  // const {
-  //   getHeaderGroups,
-  //   getRowModel,
-  //   refineCore: { setCurrent, pageCount, current },
-  // } = useTable({
-  //   columns,
-  //   refineCoreProps: {
-  //     resource: "affiliate-commissions",
-  //     pagination: { pageSize: 10, mode: "server" },
-  //   },
-  // });
-
-  const { getHeaderGroups, getRowModel } = useReactTable({
-    data: dummyCommissions,
+  const {
+    getHeaderGroups,
+    getRowModel,
+    refineCore: { setCurrent, pageCount, current, isLoading },
+  } = useTable({
     columns,
-    getCoreRowModel: getCoreRowModel(),
+    refineCoreProps: {
+      resource: "affiliates/commissions",
+      pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" }
+    },
   });
+
+  if (isLoading)
+    return (
+      <Center py="xl">
+        <Loader color="blue" />
+      </Center>
+    );
 
   return (
     <ScrollArea>
-      <List title="Affiliate Commissions">
-        <Table highlightOnHover>
+      <List>
+        <Table highlightOnHover >
           <thead>
             {getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -213,12 +189,12 @@ export default function CommissionListPage() {
           </tbody>
         </Table>
         <br />
-        {/* <Pagination
+        <Pagination
           position="right"
           total={pageCount}
           page={current}
           onChange={setCurrent}
-        /> */}
+        />
       </List>
     </ScrollArea>
   );

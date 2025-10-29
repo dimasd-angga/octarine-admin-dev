@@ -54,11 +54,13 @@ export default function ModalVariant({
       productId: 0,
       volume: 0,
       price: 0,
+      point: 0,
       enabled: true,
     },
     validate: {
       volume: (value) => (value < 0 ? "Volume cannot be negative" : null),
       price: (value) => (value < 0 ? "Price cannot be negative" : null),
+      point: (value) => (value < 0 ? "Price cannot be negative" : null),
     },
   });
 
@@ -69,6 +71,7 @@ export default function ModalVariant({
         productId: selectedVariant.productId,
         volume: selectedVariant.volume,
         price: selectedVariant.price,
+        point: selectedVariant.point,
         enabled: selectedVariant.enabled,
       });
       setPreviewUrl(selectedVariant?.imageUrl || null);
@@ -123,7 +126,7 @@ export default function ModalVariant({
   };
 
   const handleEditVariant = (values: IVariant) => {
-    if (selectedVariant?.id && files.length > 0) {
+    if (selectedVariant?.id) {
       const formData = new FormData();
       files.forEach((file, index) => {
         formData.append(`files`, file);
@@ -136,6 +139,7 @@ export default function ModalVariant({
               productId: values.productId,
               volume: values.volume,
               price: values.price,
+              point: values.point,
               enabled: values.enabled,
             }),
           ],
@@ -165,7 +169,7 @@ export default function ModalVariant({
         }
       );
     } else {
-      alert("Please upload at least one file or no changes made.");
+      alert("failed to edit variant");
     }
   };
 
@@ -195,26 +199,26 @@ export default function ModalVariant({
       { id: "id", header: "ID", accessorKey: "id" },
       { id: "volume", header: "Volume", accessorKey: "volume" },
       { id: "price", header: "Price", accessorKey: "price" },
-      {
-        id: "enabled",
-        header: "Enabled",
-        accessorKey: "enabled",
-        cell: ({ row, getValue }) => {
-          const variantId = row.original.id;
-          const enabled = getValue() as boolean;
+      // {
+      //   id: "enabled",
+      //   header: "Enabled",
+      //   accessorKey: "enabled",
+      //   cell: ({ row, getValue }) => {
+      //     const variantId = row.original.id;
+      //     const enabled = getValue() as boolean;
 
-          return (
-            <Group spacing="xs">
-              <Switch
-                checked={enabled}
-                onChange={() => handleToggleEnabled(variantId, enabled)}
-                disabled={isUpdating[variantId]}
-              />
-              {isUpdating[variantId] && <LoadingOverlay visible />}
-            </Group>
-          );
-        },
-      },
+      //     return (
+      //       <Group spacing="xs">
+      //         <Switch
+      //           checked={enabled}
+      //           onChange={() => handleToggleEnabled(variantId, enabled)}
+      //           disabled={isUpdating[variantId]}
+      //         />
+      //         {isUpdating[variantId] && <LoadingOverlay visible />}
+      //       </Group>
+      //     );
+      //   },
+      // },
       {
         id: "actions",
         header: "Actions",
@@ -329,6 +333,7 @@ export default function ModalVariant({
             <NumberInput
               label="Volume"
               placeholder="Enter volume"
+              className="form-group"
               min={0}
               {...editVariantForm.getInputProps("volume")}
               error={
@@ -342,6 +347,7 @@ export default function ModalVariant({
             <NumberInput
               label="Price"
               placeholder="Enter price"
+              className="form-group"
               min={0}
               {...editVariantForm.getInputProps("price")}
               error={
@@ -351,8 +357,22 @@ export default function ModalVariant({
               }
               hideControls
             />
-            <Switch
+            <NumberInput
+              label="Point"
+              placeholder="Enter point"
+              className="form-group"
+              min={0}
+              {...editVariantForm.getInputProps("point")}
+              error={
+                editVariantForm.errors.point && (
+                  <span>{editVariantForm.errors.point}</span>
+                )
+              }
+              hideControls
+            />
+            {/* <Switch
               label="Enabled"
+              className="form-group"
               checked={editVariantForm.values.enabled}
               onChange={(event) =>
                 editVariantForm.setFieldValue(
@@ -360,9 +380,10 @@ export default function ModalVariant({
                   event.currentTarget.checked
                 )
               }
-            />
+            /> */}
             <FileInput
               label="Files"
+              className="form-group"
               multiple
               value={files}
               onChange={setFiles}

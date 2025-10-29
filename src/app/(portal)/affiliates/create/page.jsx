@@ -14,6 +14,7 @@ import {
 import { useForm } from "@mantine/form";
 import { useCreate } from "@refinedev/core";
 import { useRouter } from "next/navigation";
+import { showNotification } from "@mantine/notifications";
 
 export default function AffiliateCreatePage() {
   const router = useRouter();
@@ -23,14 +24,20 @@ export default function AffiliateCreatePage() {
     initialValues: {
       name: "",
       email: "",
-      status: "pending",
+      status: "PENDING",
       commissionRate: 0,
       paymentMethod: "",
       referralCode: "",
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
+  // 🔹 Function to generate a random referral code
+  const generateReferralCode = () => {
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    form.setFieldValue("referralCode", code);
+  };
+
+  const handleSubmit = (values) => {
     mutate(
       {
         resource: "affiliates",
@@ -38,7 +45,19 @@ export default function AffiliateCreatePage() {
       },
       {
         onSuccess: () => {
+          showNotification({
+            title: "Success",
+            message: "Affiliate created successfully",
+            color: "green",
+          });
           router.push("/affiliates");
+        },
+        onError: () => {
+          showNotification({
+            title: "Error",
+            message: "Failed to create affiliate",
+            color: "red",
+          });
         },
       }
     );
@@ -65,6 +84,7 @@ export default function AffiliateCreatePage() {
             label="Email"
             placeholder="Enter email"
             className="form-group"
+            type="email"
             required
             {...form.getInputProps("email")}
           />
@@ -72,12 +92,12 @@ export default function AffiliateCreatePage() {
           <Select
             mt="md"
             label="Status"
-            className="form-group"
             data={[
-              { value: "pending", label: "Pending" },
-              { value: "active", label: "Active" },
-              { value: "rejected", label: "Rejected" },
+              { value: "PENDING", label: "Pending" },
+              { value: "ACTIVE", label: "Active" },
+              { value: "REJECTED", label: "Rejected" },
             ]}
+            required
             {...form.getInputProps("status")}
           />
 
@@ -100,7 +120,25 @@ export default function AffiliateCreatePage() {
             {...form.getInputProps("commissionRate")}
           />
 
-          <Group position="right" mt="md">
+          {/* 🔹 Referral Code with Generate Button */}
+          <Group className="form-group" mt="md" grow>
+            <TextInput
+              label="Referral Code"
+              placeholder="Enter or generate referral code"
+              className="form-group"
+              {...form.getInputProps("referralCode")}
+            />
+            <Button
+              color="blue"
+              variant="outline"
+              mt={22}
+              onClick={generateReferralCode}
+            >
+              Generate Code
+            </Button>
+          </Group>
+
+          <Group position="right" mt="lg">
             <Button type="submit">Create</Button>
           </Group>
         </form>

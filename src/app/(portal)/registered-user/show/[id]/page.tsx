@@ -3,13 +3,16 @@
 import { Show } from "@refinedev/mantine";
 import { useShow } from "@refinedev/core";
 import { Title, Text, Card, Group, Badge } from "@mantine/core";
+import { useParams } from "next/navigation";
 
 export default function UserDetailsPage() {
-  const { query } = useShow({ resource: "users" });
+  const params = useParams();
+  const id = params?.id as string;
+  const { query } = useShow({ resource: "users", id });
 
   const { data, isLoading } = query;
 
-//   if (isLoading) return <Text>Loading...</Text>;
+  if (isLoading) return <Text>Loading...</Text>;
 
   const user = data?.data;
 

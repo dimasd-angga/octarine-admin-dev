@@ -7,6 +7,7 @@ import {
   Image,
   MultiSelect,
   Paper,
+  Select,
   Stack,
   Switch,
   Text,
@@ -14,7 +15,9 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { showNotification } from "@mantine/notifications";
 import {
+  useList,
   useNavigation,
   useOne,
   useResource,
@@ -48,6 +51,12 @@ export default function ArticleEdit() {
     resource: "article",
     id: id!,
   });
+
+  const { data: productDataPagination } = useList({
+    resource: "product/list",
+    pagination: { mode: "off" },
+  });
+  const productData = productDataPagination?.data ?? [];
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -98,10 +107,9 @@ export default function ArticleEdit() {
       const article = data.data;
 
       form.setValues({
-        product: article.product || null,
+        product: article.product?.id || null,
         title: article.title || "",
         body: article.body || "",
-
         tags:
           options.length > 0
             ? options
@@ -190,12 +198,20 @@ export default function ArticleEdit() {
       },
       {
         onSuccess: () => {
-          alert("Article updated!");
+          showNotification({
+            title: "Success",
+            message: "Article updated successfully!",
+            color: "green",
+          });
           list("article");
         },
         onError: (error) => {
           console.error("Update Error:", error);
-          alert("Update failed");
+          showNotification({
+            title: "Error",
+            message: "Failed to update banner",
+            color: "red",
+          });
         },
       }
     );
@@ -212,12 +228,22 @@ export default function ArticleEdit() {
       },
       {
         onSuccess: () => {
-          alert(`Article ${published ? "unpublish" : "publish"}`);
+          showNotification({
+            title: "Success",
+            message: `Article ${
+              published ? "unpublished" : "published"
+            } successfully!`,
+            color: "green",
+          });
           list("article");
         },
         onError: (error) => {
           console.error("Publish Error:", error);
-          alert("Publish failed");
+          showNotification({
+            title: "Error",
+            message: `Failed to ${published ? "unpublish" : "publish"} article`,
+            color: "red",
+          });
         },
       }
     );
@@ -269,12 +295,15 @@ export default function ArticleEdit() {
               </Group>
             )}
 
-            <TextInput
-              label="Product ID"
-              placeholder="Enter product ID (optional)"
-              mt="sm"
+            <Select
+              label="Product (optional)"
+              placeholder="Select product (optional)"
+              searchable
+              data={productData.map((p: any) => ({
+                value: p.id,
+                label: `${p.name}`,
+              }))}
               {...form.getInputProps("product")}
-              styles={{ label: { fontWeight: 500, color: "#1A1B1E" } }}
             />
 
             <TextInput

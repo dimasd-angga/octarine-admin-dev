@@ -10,6 +10,7 @@ import {
   Button,
   Badge,
 } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useInvalidate, useUpdate } from "@refinedev/core";
 import {
   CreateButton,
@@ -19,12 +20,7 @@ import {
   ShowButton,
 } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { ColumnDef, flexRender } from "@tanstack/react-table";
 import Link from "next/link";
 import React from "react";
 
@@ -41,44 +37,23 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
-
-const dummyAffiliates = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    status: "pending",
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    email: "michael@example.com",
-    status: "rejected",
-  },
-];
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function AffiliateListPage() {
   const invalidate = useInvalidate();
   const { mutate } = useUpdate();
 
-  const handleStatusChange = (id: number, status: "approved" | "rejected") => {
+  const handleStatusChange = (id: number, status: "APPROVE" | "REJECT") => {
     mutate(
       {
         resource: "affiliates",
@@ -106,15 +81,15 @@ export default function AffiliateListPage() {
         header: "Status",
         accessorKey: "status",
         cell: ({ row }) => {
-          const status = row.original.status;
-          if (status === "pending") {
+          const status = row.original.status.toUpperCase();
+          if (status === "PENDING") {
             return (
               <Group spacing="xs" noWrap>
                 <Button
                   size="xs"
                   color="green"
                   onClick={() =>
-                    handleStatusChange(row.original.id, "approved")
+                    handleStatusChange(row.original.id, "APPROVE")
                   }
                 >
                   Approve
@@ -123,7 +98,7 @@ export default function AffiliateListPage() {
                   size="xs"
                   color="red"
                   onClick={() =>
-                    handleStatusChange(row.original.id, "rejected")
+                    handleStatusChange(row.original.id, "REJECT")
                   }
                 >
                   Reject
@@ -134,11 +109,11 @@ export default function AffiliateListPage() {
           return (
             <Badge
               color={
-                status === "active"
+                status === "ACTIVE"
                   ? "green"
-                  : status === "pending"
+                  : status === "PENDING"
                   ? "yellow"
-                  : status === "rejected"
+                  : status === "REJECT"
                   ? "red"
                   : "gray"
               }
@@ -164,6 +139,11 @@ export default function AffiliateListPage() {
                   resource: "affiliates",
                   invalidates: ["list"],
                 });
+                showNotification({
+                  title: "Success",
+                  message: "Affiliate deleted successfully",
+                  color: "green",
+                });
               }}
             />
             <Button
@@ -181,30 +161,22 @@ export default function AffiliateListPage() {
     [invalidate]
   );
 
-  // const {
-  //   getHeaderGroups,
-  //   getRowModel,
-  //   refineCore: { setCurrent, pageCount, current },
-  // } = useTable({
-  //   columns,
-  //   refineCoreProps: {
-  //     resource: "affiliates",
-  //     pagination: { pageSize: 10, mode: "server" },
-  //   },
-  // });
-
-  const { getHeaderGroups, getRowModel } = useReactTable({
-    data: dummyAffiliates,
+  const {
+    getHeaderGroups,
+    getRowModel,
+    refineCore: { setCurrent, pageCount, current },
+  } = useTable({
     columns,
-    getCoreRowModel: getCoreRowModel(),
+    refineCoreProps: {
+      resource: "affiliates",
+      pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" },
+    },
   });
 
   return (
     <ScrollArea>
-      <List
-        title="Affiliate Users"
-        headerButtons={<CreateButton> Create Affiliate </CreateButton>}
-      >
+      <List headerButtons={<CreateButton> Create Affiliate </CreateButton>}>
         <Table highlightOnHover>
           <thead>
             {getHeaderGroups().map((headerGroup) => (
@@ -221,7 +193,7 @@ export default function AffiliateListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}

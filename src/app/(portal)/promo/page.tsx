@@ -2,6 +2,7 @@
 
 import { IVoucher } from "@interface/voucher";
 import { Box, Group, Pagination, ScrollArea, Table, Text } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useInvalidate, useUpdate } from "@refinedev/core";
 import { DeleteButton, EditButton, List } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
@@ -22,17 +23,17 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   );
 };
 
-const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
-  if (!column.getCanFilter()) return null;
-  return (
-    <Text
-      onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
-      style={{ cursor: "pointer" }}
-    >
-      {column.getFilterValue() ? "🔍" : "🔎"}
-    </Text>
-  );
-};
+// const ColumnFilter: React.FC<{ column: any }> = ({ column }) => {
+//   if (!column.getCanFilter()) return null;
+//   return (
+//     <Text
+//       onClick={() => column.setFilterValue((old: string) => (old ? "" : " "))}
+//       style={{ cursor: "pointer" }}
+//     >
+//       {column.getFilterValue() ? "🔍" : "🔎"}
+//     </Text>
+//   );
+// };
 
 export default function VoucherListPage() {
   const invalidate = useInvalidate();
@@ -115,6 +116,11 @@ export default function VoucherListPage() {
                   resource: "promo/list",
                   invalidates: ["list"],
                 });
+                showNotification({
+                  title: "Success",
+                  message: "Voucher deleted successfully",
+                  color: "green",
+                });
               }}
             />
           </Group>
@@ -138,6 +144,7 @@ export default function VoucherListPage() {
     refineCoreProps: {
       resource: "promo/list",
       pagination: { pageSize: 10, mode: "server" },
+      sorters: { mode: "server" },
     },
   });
 
@@ -160,7 +167,7 @@ export default function VoucherListPage() {
                         </Box>
                         <Group spacing="xs" noWrap>
                           <ColumnSorter column={header.column} />
-                          <ColumnFilter column={header.column} />
+                          {/* <ColumnFilter column={header.column} /> */}
                         </Group>
                       </Group>
                     )}

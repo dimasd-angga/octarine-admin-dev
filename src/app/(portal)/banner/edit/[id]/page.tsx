@@ -53,7 +53,6 @@ export default function BannerEdit({ params }: { params: { id: string } }) {
 
   // Set form values dari API
   useEffect(() => {
-    console.log({ data });
     if (data?.data) {
       form.setValues({
         title: data.data.title || "",
@@ -222,7 +221,7 @@ export default function BannerEdit({ params }: { params: { id: string } }) {
         required
         {...form.getInputProps("type")}
       />
-      <Text size="sm" mt="md">
+      {/* <Text size="sm" mt="md">
         Enabled
       </Text>
       <Switch
@@ -232,7 +231,7 @@ export default function BannerEdit({ params }: { params: { id: string } }) {
           form.setFieldValue("enabled", event.currentTarget.checked)
         }
         mt="md"
-      />
+      /> */}
       <Group mt="md">
         <Button type="submit" loading={loadingSubmit}>
           Submit
