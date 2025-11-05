@@ -39,6 +39,7 @@ import {
   IconArticle,
   IconMessage,
   IconListCheck,
+  IconFileLike,
 } from "@tabler/icons-react";
 import "@styles/global.css";
 
@@ -296,7 +297,7 @@ export default function RootLayout({
       meta: {
         label: "User Wishlist",
         canDelete: true,
-        icon: <IconFile />,
+        icon: <IconFileLike />,
       },
     },
     {

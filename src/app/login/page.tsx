@@ -10,10 +10,15 @@ import {
   Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { showNotification } from "@mantine/notifications";
 import { AuthPage, useLogin, useNavigation } from "@refinedev/core";
 
 export default function LoginPage() {
-  const { mutate: login } = useLogin();
+  const { mutate: login } = useLogin({
+    mutationOptions: {
+      retry: 0,
+    },
+  });
   const { list } = useNavigation();
   const form = useForm({
     initialValues: {
@@ -36,11 +41,18 @@ export default function LoginPage() {
       },
       {
         onSuccess: () => {
-          list("dashboard");
+          showNotification({
+            title: "Success",
+            message: "Login successfully",
+            color: "green",
+          });
         },
         onError: (error) => {
-          console.error("Login Error:", error);
-          alert("Login gagal. Periksa email atau password Anda.");
+          showNotification({
+            title: "Error",
+            message: "Invalid credential",
+            color: "red",
+          });
         },
       }
     );

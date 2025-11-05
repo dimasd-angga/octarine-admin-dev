@@ -29,13 +29,18 @@ export default function Dashboard() {
 
   let data: any = {};
   if (useApi) {
-    const { data: response, isLoading } = useCustom({
+    const {
+      data: response,
+      isLoading,
+      isError,
+    } = useCustom({
       url: "dashboard",
       method: "get",
     });
     data = response;
 
     if (isLoading) return <p>Loading...</p>;
+    if (isError) return <p>Failed to get dashboard data</p>;
   } else {
     data = {
       totalRevenue: 10000,

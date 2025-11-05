@@ -3,31 +3,22 @@
 import {
   Box,
   Button,
-  FileButton,
-  FileInput,
   Group,
-  Image,
   Loader,
   PasswordInput,
-  Text,
   TextInput,
 } from "@mantine/core";
 import { Edit } from "@refinedev/mantine";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
 import { useOne, useUpdate } from "@refinedev/core";
-import { axiosInstance } from "@service/axiosInstance";
 import { useRouter } from "next/navigation";
 import nookies from "nookies";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function UserEditPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const router = useRouter();
-
-  const [file, setFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const form = useForm({
     initialValues: {
@@ -35,7 +26,6 @@ export default function UserEditPage({ params }: { params: { id: string } }) {
       lastName: "",
       email: "",
       phoneNumber: "",
-      address: "",
       password: "",
       password_confirmation: "",
     },
@@ -47,15 +37,15 @@ export default function UserEditPage({ params }: { params: { id: string } }) {
     },
   });
 
-  // ✅ Fetch user data
+  // ✅ Fetch existing user data
   const { data, isLoading } = useOne({
     resource: "users",
     id,
   });
 
-  const { mutate, isLoading: loadingSubmit } = useUpdate();
+  const { mutate, isPending: loadingSubmit } = useUpdate();
 
-  // ✅ Set form values from API
+  // ✅ Set form values from the API
   useEffect(() => {
     if (data?.data) {
       const u = data.data;
@@ -64,92 +54,30 @@ export default function UserEditPage({ params }: { params: { id: string } }) {
         lastName: u.lastName || "",
         email: u.email || "",
         phoneNumber: u.phoneNumber || "",
-        address: u.address || "",
         password: "",
         password_confirmation: "",
       });
     }
   }, [data]);
 
-  // ✅ Fetch existing profile image
-  useEffect(() => {
-    const fetchImage = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `/users/${id}/profile-picture`,
-          {
-            responseType: "blob",
-          }
-        );
-        const imageBlob = response.data;
-        const objectUrl = URL.createObjectURL(imageBlob);
-        setImageUrl(objectUrl);
-      } catch (error) {
-        console.warn("No profile image found:", error);
-      }
-    };
-    if (id) fetchImage();
-
-    return () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
-    };
-  }, [id]);
-
-  // ✅ Preview new image when uploaded
-  useEffect(() => {
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    } else {
-      setPreviewUrl(null);
-    }
-
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [file]);
-
   if (isLoading) return <Loader />;
 
-  // ✅ Submit update
+  // ✅ Submit form (call update user API)
   const handleSubmit = (values: typeof form.values) => {
-    const formData = new FormData();
-    if (file) formData.append("profile_picture", file);
-
-    formData.append(
-      "request",
-      new Blob(
-        [
-          JSON.stringify({
-            firstName: values.firstName,
-            lastName: values.lastName,
-            email: values.email,
-            phoneNumber: values.phoneNumber,
-            address: values.address,
-            ...(values.password
-              ? {
-                  password: values.password,
-                  password_confirmation: values.password_confirmation,
-                }
-              : {}),
-          }),
-        ],
-        { type: "application/json" }
-      )
-    );
-
-    const token = nookies.get(null)["auth_token"];
+    const payload = {
+      firstName: values.firstName,
+      lastName: values.lastName,
+      email: values.email,
+      phoneNumber: values.phoneNumber,
+      enabled: true,
+      ...(values.password ? { password: values.password } : {}),
+    };
 
     mutate(
       {
         resource: "users",
         id,
-        values: formData,
-        meta: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        values: payload,
       },
       {
         onSuccess: () => {
@@ -158,7 +86,7 @@ export default function UserEditPage({ params }: { params: { id: string } }) {
             message: "User updated successfully!",
             color: "green",
           });
-          router.push("/users");
+          router.push("/registered-user");
         },
         onError: (error) => {
           console.error("Update failed:", error);
@@ -179,34 +107,6 @@ export default function UserEditPage({ params }: { params: { id: string } }) {
       deleteButtonProps={{ style: { display: "none" } }}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Box mt="sm">
-          <Group position="center" mb="sm">
-            <Image
-              src={previewUrl || imageUrl || "/placeholder.png"}
-              alt="Profile Preview"
-              width={120}
-              height={120}
-              radius="xl"
-              fit="cover"
-              withPlaceholder
-            />
-          </Group>
-
-          <FileButton
-            onChange={(file) => {
-              if (file) {
-                setFile(file);
-                const reader = new FileReader();
-                reader.onload = () => setPreviewUrl(reader.result as string);
-                reader.readAsDataURL(file);
-              }
-            }}
-            accept="image/png,image/jpeg"
-          >
-            {(props) => <Button {...props}>Upload New Picture</Button>}
-          </FileButton>
-        </Box>
-
         <TextInput
           label="First Name"
           placeholder="Enter first name"
@@ -236,13 +136,6 @@ export default function UserEditPage({ params }: { params: { id: string } }) {
           placeholder="Enter phone number"
           mt="sm"
           {...form.getInputProps("phoneNumber")}
-        />
-
-        <TextInput
-          label="Address"
-          placeholder="Enter address"
-          mt="sm"
-          {...form.getInputProps("address")}
         />
 
         <PasswordInput

@@ -1,9 +1,10 @@
 "use client";
 
-import { AuthBindings } from "@refinedev/core";
+import { AuthBindings, AuthProvider } from "@refinedev/core";
 import nookies from "nookies";
 import { jwtDecode } from "jwt-decode";
 import { TOKEN_KEY } from "@utils/constants";
+import { showNotification } from "@mantine/notifications";
 
 const API_URL = "https://octarinedev.mhafizsir.com/";
 const COOKIE_NAME = "auth_token";
@@ -17,7 +18,7 @@ interface JwtPayload {
   username?: string;
 }
 
-export const authProvider: AuthBindings = {
+export const authProvider: AuthProvider = {
   login: async ({ email, password, remember }) => {
     try {
       const response = await fetch(`${API_URL}auth/login`, {
@@ -28,9 +29,8 @@ export const authProvider: AuthBindings = {
         body: JSON.stringify({ username: email, password }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.token) {
+      if (response.ok) {
+        const data = await response.json();
         console.log("Login Token:", data.token);
         localStorage.setItem(TOKEN_KEY, data.token);
 
@@ -42,19 +42,13 @@ export const authProvider: AuthBindings = {
 
         return {
           success: true,
-          redirectTo: "/banner",
+          redirectTo: "/dashboard",
         };
       }
 
-      return {
-        success: false,
-        error: new Error(data.message || "Invalid credentials"),
-      };
+      throw new Error("Invalid credentials");
     } catch (error) {
-      return {
-        success: false,
-        error: new Error("Login failed"),
-      };
+      throw new Error("Login failed");
     }
   },
 
@@ -97,28 +91,23 @@ export const authProvider: AuthBindings = {
         if (decoded.exp < currentTime) {
           localStorage.removeItem(TOKEN_KEY);
           nookies.destroy(null, COOKIE_NAME, { path: "/" });
-          return {
-            authenticated: false,
-            redirectTo: "/login",
-          };
+          // return {
+          //   authenticated: false,
+          //   redirectTo: "/login",
+          // };
+          throw new Error("Failed to check user");
         }
         return {
           authenticated: true,
-          redirectTo: "/banner",
+          redirectTo: "/dashboard",
         };
       } catch (error) {
         localStorage.removeItem(TOKEN_KEY);
         nookies.destroy(null, COOKIE_NAME, { path: "/" });
-        return {
-          authenticated: false,
-          redirectTo: "/login",
-        };
+        throw new Error("Failed to check user");
       }
     }
-    return {
-      authenticated: false,
-      redirectTo: "/login",
-    };
+    throw new Error("Failed to check user");
   },
 
   getIdentity: async () => {
@@ -132,10 +121,10 @@ export const authProvider: AuthBindings = {
           username: decoded.username || decoded.sub,
         };
       } catch (error) {
-        return null;
+        throw new Error("Failed to get identity");
       }
     }
-    return null;
+    throw new Error("Failed to get identity");
   },
 
   getPermissions: async () => {
@@ -158,6 +147,11 @@ export const authProvider: AuthBindings = {
   onError: async (error) => {
     if (error.status === 401 || error.status === 403) {
       localStorage.removeItem(TOKEN_KEY);
+      showNotification({
+        title: "Session Expired",
+        message: "Your session has expired. Please log in again to continue.",
+        color: "blue",
+      });
       nookies.destroy(null, COOKIE_NAME, { path: "/" });
       return {
         logout: true,

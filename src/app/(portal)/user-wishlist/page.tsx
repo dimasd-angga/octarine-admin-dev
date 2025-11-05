@@ -12,56 +12,29 @@ import {
   Button,
   Modal,
   Select,
+  LoadingOverlay,
 } from "@mantine/core";
 import { List } from "@refinedev/mantine";
 import { ColumnDef, flexRender } from "@tanstack/react-table";
 import { useTable } from "@refinedev/react-table";
+import { useList, useCreate, useDelete } from "@refinedev/core";
 import { IconHeartOff, IconHeartPlus } from "@tabler/icons-react";
 
-// Dummy wishlist data (Admin view, with user info)
-const initialWishlist = [
-  {
-    id: 1,
-    user_id: 101,
-    user_name: "Alice Johnson",
-    product_id: 201,
-    product_name: "Wireless Headphones",
-    price: "$199",
-  },
-  {
-    id: 2,
-    user_id: 102,
-    user_name: "Bob Smith",
-    product_id: 202,
-    product_name: "Smart Watch",
-    price: "$149",
-  },
-  {
-    id: 3,
-    user_id: 101,
-    user_name: "Alice Johnson",
-    product_id: 203,
-    product_name: "Gaming Mouse",
-    price: "$59",
-  },
-];
-
-// Dummy users for selection
+// Dummy users/products for selection (for the modal)
 const users = [
   { value: "101", label: "Alice Johnson" },
   { value: "102", label: "Bob Smith" },
   { value: "103", label: "Charlie Davis" },
 ];
 
-// Dummy products for selection
 const products = [
-  { value: "201", label: "Wireless Headphones - $199", price: "$199" },
-  { value: "202", label: "Smart Watch - $149", price: "$149" },
-  { value: "203", label: "Gaming Mouse - $59", price: "$59" },
-  { value: "204", label: "Bluetooth Speaker - $99", price: "$99" },
+  { value: "201", label: "Wireless Headphones - $199" },
+  { value: "202", label: "Smart Watch - $149" },
+  { value: "203", label: "Gaming Mouse - $59" },
+  { value: "204", label: "Bluetooth Speaker - $99" },
 ];
 
-// Column sorter
+// Sorting icon
 const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   if (!column.getCanSort()) return null;
   const sorted = column.getIsSorted();
@@ -76,45 +49,64 @@ const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
 };
 
 export default function UserWishlistPage() {
-  const [wishlist, setWishlist] = React.useState(initialWishlist);
   const [opened, setOpened] = React.useState(false);
   const [formData, setFormData] = React.useState({
     user_id: "",
     product_id: "",
   });
 
+  /** 1️⃣ Fetch Wishlists */
+  const { data, isLoading, refetch } = useList({
+    resource: `users/${formData.user_id || "101"}/wishlists`,
+  });
+
+  const wishlist = data?.data || [];
+
+  /** 2️⃣ Add (POST) Wishlist */
+  const { mutate: createWishlist, isLoading: creating } = useCreate();
+
   const handleAddWishlist = () => {
     if (!formData.user_id || !formData.product_id) return;
 
-    const user = users.find((u) => u.value === formData.user_id);
-    const product = products.find((p) => p.value === formData.product_id);
-
-    if (!user || !product) return;
-
-    const newItem = {
-      id: wishlist.length + 1,
-      user_id: Number(user.value),
-      user_name: user.label,
-      product_id: Number(product.value),
-      product_name: product.label.split(" - ")[0],
-      price: product.price,
-    };
-
-    setWishlist([...wishlist, newItem]);
-    setOpened(false);
-    setFormData({
-      user_id: "",
-      product_id: "",
-    });
+    createWishlist(
+      {
+        resource: `users/${formData.user_id}/wishlists`,
+        values: {
+          productId: Number(formData.product_id),
+        },
+      },
+      {
+        onSuccess: () => {
+          refetch();
+          setOpened(false);
+          setFormData({ user_id: "", product_id: "" });
+        },
+      }
+    );
   };
 
+  /** 3️⃣ Delete (DELETE) Wishlist */
+  const { mutate: deleteWishlist } = useDelete();
+
+  const handleDelete = (userId: number, wishlistId: number) => {
+    deleteWishlist(
+      {
+        resource: `users/${userId}/wishlists`,
+        id: wishlistId,
+      },
+      {
+        onSuccess: () => refetch(),
+      }
+    );
+  };
+
+  /** 4️⃣ Table setup */
   const columns = React.useMemo<ColumnDef<any>[]>(
     () => [
       { id: "id", header: "ID", accessorKey: "id" },
-      { id: "user_id", header: "User ID", accessorKey: "user_id" },
-      { id: "user_name", header: "User Name", accessorKey: "user_name" },
-      { id: "product_name", header: "Product", accessorKey: "product_name" },
-      { id: "price", header: "Price", accessorKey: "price" },
+      { id: "userEmail", header: "User Email", accessorKey: "userEmail" },
+      { id: "productName", header: "Product", accessorKey: "productName" },
+      { id: "createdAt", header: "Created", accessorKey: "createdAt" },
       {
         id: "actions",
         header: "Actions",
@@ -122,13 +114,10 @@ export default function UserWishlistPage() {
           const item = row.original;
           return (
             <Group spacing="xs">
-              {/* Remove from Wishlist */}
               <ActionIcon
                 color="red"
                 variant="light"
-                onClick={() =>
-                  setWishlist(wishlist.filter((w) => w.id !== item.id))
-                }
+                onClick={() => handleDelete(item.userId, item.id)}
               >
                 <IconHeartOff size={16} />
               </ActionIcon>
@@ -137,7 +126,7 @@ export default function UserWishlistPage() {
         },
       },
     ],
-    [wishlist]
+    []
   );
 
   const {
@@ -150,8 +139,10 @@ export default function UserWishlistPage() {
     pageCount: Math.ceil(wishlist.length / 10),
   });
 
+  /** 5️⃣ Render */
   return (
     <ScrollArea>
+      <LoadingOverlay visible={isLoading || creating} />
       <List
         headerButtons={
           <Button
@@ -226,10 +217,7 @@ export default function UserWishlistPage() {
           mt="md"
           label="Product"
           placeholder="Select a product"
-          data={products.map((p) => ({
-            value: p.value,
-            label: p.label,
-          }))}
+          data={products}
           value={formData.product_id}
           onChange={(value) =>
             setFormData((prev) => ({ ...prev, product_id: value || "" }))

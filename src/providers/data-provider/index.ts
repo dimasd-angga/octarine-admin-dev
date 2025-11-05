@@ -46,10 +46,10 @@ const generateFilter = (filters?: CrudFilters) => {
 
 export const dataProvider = (axios: AxiosInstance): DataProvider => ({
   ...dataProviderSimpleRest(API_URL, axios),
-  custom: async ({ url: resource, filters, method = "get" }) => {
+  custom: async ({ url: resource, filters, query = {}, method = "get" }) => {
     const url = new URL(`${API_URL}/${resource}`);
     const queryFilters = generateFilter(filters);
-    url.search = queryString.stringify({ ...queryFilters });
+    url.search = queryString.stringify({ ...queryFilters, ...query });
     const { data } = await axiosInstance[method](url.toString());
     return data;
   },
