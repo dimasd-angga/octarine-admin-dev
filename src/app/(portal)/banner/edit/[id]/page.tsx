@@ -15,7 +15,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
-import { useOne, useUpdate } from "@refinedev/core";
+import { useList, useOne, useUpdate } from "@refinedev/core";
 import { axiosInstance } from "@service/axiosInstance";
 import { useRouter } from "next/navigation";
 import nookies from "nookies";
@@ -28,6 +28,19 @@ export default function BannerEdit({ params }: { params: { id: string } }) {
   const [file, setFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const { data: bannerTypesList } = useList({
+    resource: "banner-type",
+    meta: {
+      variables: {
+        name: "variable",
+        value: {
+          baseEndpoint: "enums",
+        },
+      },
+    },
+  });
+  const bannerTypes = bannerTypesList?.data ?? [];
 
   const form = useForm({
     initialValues: {
@@ -210,14 +223,10 @@ export default function BannerEdit({ params }: { params: { id: string } }) {
       />
       <Select
         label="Type"
-        data={[
-          { label: "Home Bottom", value: "HOME_BOTTOM" },
-          { label: "Home Top", value: "HOME_TOP" },
-          { label: "Collection Men", value: "COLLECTION_MEN" },
-          { label: "Collection Women", value: "COLLECTION_WOMEN" },
-          { label: "Collection Unisex", value: "COLLECTION_UNISEX" },
-          { label: "Collection Segmented", value: "COLLECTION_SEGMENTED" },
-        ]}
+        data={bannerTypes.map((type) => ({
+          label: type.label,
+          value: type.value,
+        }))}
         required
         {...form.getInputProps("type")}
       />

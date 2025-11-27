@@ -110,51 +110,61 @@ export default function ProductListPage() {
           return <Text>{date.toLocaleDateString()}</Text>;
         },
       },
-      // {
-      //   id: "enabled",
-      //   header: "Enabled",
-      //   accessorKey: "enabled",
-      //   cell: ({ row, getValue }) => {
-      //     const productId = row.original.id as number;
-      //     const enabled = getValue() as boolean;
+      {
+        id: "enabled",
+        header: "Enabled",
+        accessorKey: "enabled",
+        cell: ({ row, getValue }) => {
+          const productId = row.original.id as number;
+          const enabled = getValue() as boolean;
 
-      //     const handleToggle = () => {
-      //       setIsUpdating((prev) => ({ ...prev, [productId]: true }));
-      //       updateProduct(
-      //         {
-      //           resource: "product",
-      //           id: productId.toString(),
-      //           values: { enabled: !enabled },
-      //           mutationMode: "optimistic",
-      //         },
-      //         {
-      //           onSuccess: () => {
-      //             invalidate({
-      //               resource: "product/list",
-      //               invalidates: ["list"],
-      //             });
-      //             setIsUpdating((prev) => ({ ...prev, [productId]: false }));
-      //           },
-      //           onError: () => {
-      //             setIsUpdating((prev) => ({ ...prev, [productId]: false }));
-      //           },
-      //         }
-      //       );
-      //     };
+          const handleToggle = () => {
+            setIsUpdating((prev) => ({ ...prev, [productId]: true }));
+            updateProduct(
+              {
+                resource: "product",
+                id: productId.toString(),
+                values: { enabled: !enabled },
+                mutationMode: "optimistic",
+              },
+              {
+                onSuccess: () => {
+                  showNotification({
+                    title: "Success",
+                    message: "Product updated successfully",
+                    color: "green",
+                  });
+                  invalidate({
+                    resource: "product/list",
+                    invalidates: ["list"],
+                  });
+                  setIsUpdating((prev) => ({ ...prev, [productId]: false }));
+                },
+                onError: () => {
+                  showNotification({
+                    title: "Error",
+                    message: "Failed to update product",
+                    color: "red",
+                  });
+                  setIsUpdating((prev) => ({ ...prev, [productId]: false }));
+                },
+              }
+            );
+          };
 
-      //     return (
-      //       <Group spacing="xs">
-      //         <Switch
-      //           checked={enabled}
-      //           onChange={handleToggle}
-      //           disabled={isUpdating[productId]}
-      //         />
-      //         {isUpdating[productId] && <LoadingOverlay visible />}
-      //       </Group>
-      //     );
-      //   },
-      //   enableColumnFilter: false,
-      // },
+          return (
+            <Group spacing="xs">
+              <Switch
+                checked={enabled}
+                onChange={handleToggle}
+                disabled={isUpdating[productId]}
+              />
+              {isUpdating[productId] && <LoadingOverlay visible />}
+            </Group>
+          );
+        },
+        enableColumnFilter: false,
+      },
       {
         id: "bestSeller",
         header: "Best Seller",

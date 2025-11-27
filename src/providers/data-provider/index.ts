@@ -15,6 +15,7 @@ import {
 } from "@refinedev/core";
 import { axiosInstance } from "@service/axiosInstance";
 
+export const BASE_URL = "https://octarinedev.mhafizsir.com";
 export const API_URL = "https://octarinedev.mhafizsir.com/admin";
 
 const mapOperator = (operator: CrudOperators): string => {
@@ -58,8 +59,14 @@ export const dataProvider = (axios: AxiosInstance): DataProvider => ({
     pagination,
     filters,
     sorters,
+    meta,
   }: GetListParams) => {
-    const url = new URL(`${API_URL}/${resource}`);
+    let url = new URL(`${API_URL}/${resource}`);
+    if (meta?.variables?.value.baseEndpoint != null) {
+      url = new URL(
+        `${BASE_URL}/${meta?.variables?.value.baseEndpoint}/${resource}`
+      );
+    }
 
     let query: any = {
       enabled: true,

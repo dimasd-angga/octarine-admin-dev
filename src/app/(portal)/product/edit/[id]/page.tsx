@@ -15,7 +15,13 @@ import {
   Stack,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useUpdate, useNavigation, useResource, useOne } from "@refinedev/core";
+import {
+  useUpdate,
+  useNavigation,
+  useResource,
+  useOne,
+  useList,
+} from "@refinedev/core";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
@@ -43,6 +49,32 @@ export default function ProductEditPage() {
     resource: "product",
     id: productId,
   });
+
+  const { data: genderPreferencesList } = useList({
+    resource: "gender-preferences",
+    meta: {
+      variables: {
+        name: "variable",
+        value: {
+          baseEndpoint: "enums",
+        },
+      },
+    },
+  });
+  const genderPreferences = genderPreferencesList?.data ?? [];
+
+  const { data: productTypesList } = useList({
+    resource: "product-types",
+    meta: {
+      variables: {
+        name: "variable",
+        value: {
+          baseEndpoint: "enums",
+        },
+      },
+    },
+  });
+  const productTypes = productTypesList?.data ?? [];
 
   const form = useForm({
     initialValues: {
@@ -243,11 +275,10 @@ export default function ProductEditPage() {
         <Select
           label="Gender Preference"
           placeholder="Select gender preference"
-          data={[
-            { value: "MEN", label: "Men" },
-            { value: "WOMEN", label: "Women" },
-            { value: "UNISEX", label: "Unisex" },
-          ]}
+          data={genderPreferences.map((type) => ({
+            label: type.label,
+            value: type.value,
+          }))}
           mt="sm"
           {...form.getInputProps("genderPreference")}
         />
@@ -255,11 +286,10 @@ export default function ProductEditPage() {
         <MultiSelect
           label="Type"
           placeholder="Select type preference"
-          data={[
-            { value: "SPICES", label: "Spices" },
-            { value: "VANILLA", label: "Vanilla" },
-            { value: "FRUITS", label: "Fruits" },
-          ]}
+          data={productTypes.map((type) => ({
+            label: type.label,
+            value: type.value,
+          }))}
           mt="sm"
           {...form.getInputProps("types")}
         />

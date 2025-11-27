@@ -13,15 +13,33 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
-import { useCreate, useNavigation, useResource } from "@refinedev/core";
+import {
+  useCreate,
+  useList,
+  useNavigation,
+  useResource,
+} from "@refinedev/core";
 import { useEffect, useState } from "react";
 
 export default function BannerCreate() {
-  const { mutate, isLoading } = useCreate();
+  const { mutate, isPending: isLoading } = useCreate();
   const { list } = useNavigation();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const { data: bannerTypesList } = useList({
+    resource: "banner-type",
+    meta: {
+      variables: {
+        name: "variable",
+        value: {
+          baseEndpoint: "enums",
+        },
+      },
+    },
+  });
+  const bannerTypes = bannerTypesList?.data ?? [];
 
   const form = useForm({
     initialValues: {
@@ -150,14 +168,11 @@ export default function BannerCreate() {
 
       <Select
         label="Type"
-        data={[
-          { label: "Home Bottom", value: "HOME_BOTTOM" },
-          { label: "Home Top", value: "HOME_TOP" },
-          { label: "Collection Men", value: "COLLECTION_MEN" },
-          { label: "Collection Women", value: "COLLECTION_WOMEN" },
-          { label: "Collection Unisex", value: "COLLECTION_UNISEX" },
-          { label: "Collection Segmented", value: "COLLECTION_SEGMENTED" },
-        ]}
+        data={bannerTypes.map((type) => ({
+          label: type.label,
+          value: type.value,
+        }))}
+        placeholder="Select banner type"
         required
         mt="sm"
         {...form.getInputProps("type")}
