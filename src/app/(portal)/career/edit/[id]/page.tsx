@@ -19,6 +19,7 @@ const CareerEdit = () => {
         employmentType: "",
         location: "",
         url: "",
+        enabled: true,
       },
       validate: {
         title: (value) => (value.length < 2 ? "Too short title" : null),

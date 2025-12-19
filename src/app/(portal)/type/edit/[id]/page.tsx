@@ -1,8 +1,13 @@
 "use client";
 
 import { Switch, Text, TextInput } from "@mantine/core";
-import { Edit, useForm } from "@refinedev/mantine";
+import { useForm } from "@mantine/form";
+import { Edit } from "@refinedev/mantine";
+import { useOne, useUpdate } from "@refinedev/core";
+import { useParams, useRouter } from "next/navigation";
+import { showNotification } from "@mantine/notifications";
 import dynamic from "next/dynamic";
+import { useEffect } from "react";
 import "react-quill/dist/quill.snow.css";
 
 const ReactQuill = dynamic(() => import("react-quill"), {
@@ -10,29 +15,83 @@ const ReactQuill = dynamic(() => import("react-quill"), {
 });
 
 const TypeEdit: React.FC = () => {
-  const { saveButtonProps, getInputProps, values, setFieldValue, errors } =
-    useForm({
-      initialValues: {
-        name: "",
-        description: "",
-        enabled: true,
-      },
-      validate: {
-        name: (value) => (value.length < 2 ? "Name too short" : null),
-        description: (value) =>
-          value.length < 10 ? "Description too short" : null,
-      },
-      refineCoreProps: {
+  const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
+
+  const { mutate, isLoading: isSaving } = useUpdate();
+
+  const { data: typeData, isLoading } = useOne({
+    resource: "product/type",
+    id,
+  });
+
+  const form = useForm({
+    initialValues: {
+      name: "",
+      description: "",
+      enabled: true,
+    },
+    validate: {
+      name: (value) => (value.length < 2 ? "Name too short" : null),
+      description: (value) =>
+        value.length < 10 ? "Description too short" : null,
+    },
+  });
+
+  // Populate form with existing data
+  useEffect(() => {
+    if (typeData?.data) {
+      const data = typeData.data as {
+        name: string;
+        description: string;
+        enabled: boolean;
+      };
+      form.setValues({
+        name: data.name || "",
+        description: data.description || "",
+        enabled: data.enabled ?? true,
+      });
+    }
+  }, [typeData]);
+
+  const handleSubmit = (values: typeof form.values) => {
+    const payload = {
+      id: id,
+      name: values.name,
+      description: values.description,
+      enabled: values.enabled,
+    };
+
+    mutate(
+      {
         resource: "product/type",
-        action: "edit",
-        onMutationSuccess: (data) => {
-          console.log("Data updated:", data);
-        },
+        id: "",
+        values: payload,
       },
-    });
+      {
+        onSuccess: () => {
+          showNotification({
+            title: "Success",
+            message: "Product type updated successfully!",
+            color: "green",
+          });
+          router.push("/type");
+        },
+        onError: (error) => {
+          console.error("Update failed:", error);
+          showNotification({
+            title: "Error",
+            message: "Failed to update product type",
+            color: "red",
+          });
+        },
+      }
+    );
+  };
 
   const handleEditorChange = (value: string) => {
-    setFieldValue("description", value);
+    form.setFieldValue("description", value);
   };
 
   const modules = {
@@ -48,36 +107,39 @@ const TypeEdit: React.FC = () => {
   };
 
   return (
-    <Edit saveButtonProps={saveButtonProps}>
-      <form>
+    <Edit
+      saveButtonProps={{
+        onClick: form.onSubmit(handleSubmit),
+        loading: isSaving,
+      }}
+      isLoading={isLoading}
+    >
+      <form onSubmit={form.onSubmit(handleSubmit)}>
         <TextInput
           mt={8}
           label="Name"
           placeholder="Enter name"
-          {...getInputProps("name")}
+          {...form.getInputProps("name")}
         />
         <Text mt={8} weight={500} size="sm" color="#212529">
           Description
         </Text>
         <ReactQuill
           theme="snow"
-          value={values.description}
+          value={form.values.description}
           onChange={handleEditorChange}
           style={{ height: "200px", marginBottom: "40px" }}
           modules={modules}
         />
-        {errors.description && (
+        {form.errors.description && (
           <Text mt={2} weight={500} size="xs" color="red">
-            {errors.description}
+            {form.errors.description}
           </Text>
         )}
         <Switch
-          mt={8}
+          mt={16}
           label="Enabled"
-          checked={values.enabled}
-          onChange={(event) =>
-            setFieldValue("enabled", event.currentTarget.checked)
-          }
+          {...form.getInputProps("enabled", { type: "checkbox" })}
         />
       </form>
     </Edit>

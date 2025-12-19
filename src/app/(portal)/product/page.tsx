@@ -293,6 +293,14 @@ export default function ProductListPage() {
       sorters: {
         mode: "server",
       },
+      meta: {
+        variables: {
+          name: "variable",
+          value: {
+            useEnabled: false,
+          },
+        },
+      },
     },
   });
 

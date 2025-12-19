@@ -83,7 +83,7 @@ export default function ProductEditPage() {
       storyBehind: "",
       enabled: true,
       genderPreference: "",
-      types: [],
+      productTypes: [],
     },
     validate: {
       name: (value) =>
@@ -107,7 +107,7 @@ export default function ProductEditPage() {
         storyBehind: data.storyBehind || "",
         enabled: data.enabled ?? true,
         genderPreference: data.genderPreference || "",
-        types: data.types || [],
+        productTypes: data.productTypes || [],
       });
 
       if (data.thumbnail) {
@@ -291,7 +291,7 @@ export default function ProductEditPage() {
             value: type.value,
           }))}
           mt="sm"
-          {...form.getInputProps("types")}
+          {...form.getInputProps("productTypes")}
         />
 
         <Group mt="sm">

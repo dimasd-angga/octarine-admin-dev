@@ -21,6 +21,7 @@ const CareerCreate: React.FC = () => {
         department: "",
         responsibilities: "",
         url: "",
+        enabled: true,
       },
       refineCoreProps: {
         resource: "career/create",

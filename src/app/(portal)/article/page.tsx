@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useInvalidate, useUpdate } from "@refinedev/core";
-import { EditButton, List } from "@refinedev/mantine";
+import { DeleteButton, EditButton, List } from "@refinedev/mantine";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef, flexRender } from "@tanstack/react-table";
 import React, { useState } from "react";
@@ -124,6 +124,21 @@ export default function ArticleListPage() {
               >
                 {published ? "Unpublish" : "Publish"}
               </Button>
+              <DeleteButton
+                hideText
+                recordItemId={id}
+                onSuccess={() => {
+                  invalidate({
+                    resource: "article/list",
+                    invalidates: ["list"],
+                  });
+                  showNotification({
+                    title: "Success",
+                    message: "Article deleted successfully",
+                    color: "green",
+                  });
+                }}
+              />
             </Group>
           );
         },

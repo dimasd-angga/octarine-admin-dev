@@ -47,6 +47,7 @@ import { authProvider } from "@providers/auth-provider";
 import { dataProvider } from "@providers/data-provider";
 import { axiosInstance } from "@service/axiosInstance";
 import { CustomTitle } from "@components/layout/CustomSidebarTitle";
+import NextTopLoader from "nextjs-toploader";
 
 export default function RootLayout({
   children,
@@ -292,8 +293,8 @@ export default function RootLayout({
       },
     },
     {
-      name: "user-wishlist",
-      list: "/user-wishlist",
+      name: "wishlist",
+      list: "/wishlist",
       meta: {
         label: "User Wishlist",
         canDelete: true,
@@ -444,6 +445,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <NextTopLoader />
         <Suspense>
           <MantineProvider
             theme={RefineThemes.Blue}
@@ -451,7 +453,6 @@ export default function RootLayout({
             withGlobalStyles
           >
             <Global styles={{ body: { WebkitFontSmoothing: "auto" } }} />
-
             <NotificationsProvider position="top-right">
               <RefineKbarProvider>
                 <DevtoolsProvider>

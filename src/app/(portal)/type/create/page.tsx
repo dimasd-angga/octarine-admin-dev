@@ -72,14 +72,6 @@ const TypeCreate: React.FC = () => {
             {errors.description}
           </Text>
         )}
-        <Switch
-          mt={8}
-          label="Enabled"
-          checked={values.enabled}
-          onChange={(event) =>
-            setFieldValue("enabled", event.currentTarget.checked)
-          }
-        />
       </form>
     </Create>
   );

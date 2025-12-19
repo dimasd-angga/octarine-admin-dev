@@ -67,10 +67,12 @@ export const dataProvider = (axios: AxiosInstance): DataProvider => ({
         `${BASE_URL}/${meta?.variables?.value.baseEndpoint}/${resource}`
       );
     }
+    const useEnabled = meta?.variables?.value.useEnabled ?? true;
+    let query: any = {};
 
-    let query: any = {
-      enabled: true,
-    };
+    if (useEnabled) {
+      query.enabled = true;
+    }
 
     if (pagination?.mode != "off") {
       // Pagination
