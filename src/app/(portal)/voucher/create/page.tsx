@@ -6,6 +6,7 @@ import { Create, useForm } from "@refinedev/mantine";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import "react-quill/dist/quill.snow.css";
+import { formatLocalDateTime } from "@/utils/dateUtils";
 
 const ReactQuill = dynamic(() => import("react-quill"), {
   ssr: false,
@@ -23,8 +24,8 @@ const VoucherCreate: React.FC = () => {
         discountValue: 0,
         maxDiscountAmount: 0,
         minOrderAmount: 0,
-        validFrom: new Date().toISOString(),
-        validUntil: new Date().toISOString(),
+        validFrom: formatLocalDateTime(new Date()),
+        validUntil: formatLocalDateTime(new Date()),
         usageLimit: 1073741824,
         enabled: true,
       },
@@ -119,10 +120,7 @@ const VoucherCreate: React.FC = () => {
           {...getInputProps("validFrom")}
           value={values.validFrom.slice(0, 16)}
           onChange={(event) =>
-            setFieldValue(
-              "validFrom",
-              new Date(event.target.value).toISOString()
-            )
+            setFieldValue("validFrom", event.target.value + ":00")
           }
         />
         <TextInput
@@ -132,10 +130,7 @@ const VoucherCreate: React.FC = () => {
           {...getInputProps("validUntil")}
           value={values.validUntil.slice(0, 16)}
           onChange={(event) =>
-            setFieldValue(
-              "validUntil",
-              new Date(event.target.value).toISOString()
-            )
+            setFieldValue("validUntil", event.target.value + ":00")
           }
         />
         <NumberInput

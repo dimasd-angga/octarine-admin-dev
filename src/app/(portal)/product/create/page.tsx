@@ -163,12 +163,12 @@ export default function ProductCreatePage() {
             message: "Product created successfully",
             color: "green",
           });
-          list("product/list");
+          list("product");
         },
         onError: (error) => {
           console.error("Create Error:", error);
           showNotification({
-            title: "Success",
+            title: "Failed",
             message: "Failed to create product",
             color: "red",
           });

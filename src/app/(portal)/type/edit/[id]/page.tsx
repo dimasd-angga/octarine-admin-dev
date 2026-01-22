@@ -57,7 +57,7 @@ const TypeEdit: React.FC = () => {
 
   const handleSubmit = (values: typeof form.values) => {
     const payload = {
-      id: id,
+      id: id.replaceAll("%20", " "),
       name: values.name,
       description: values.description,
       enabled: values.enabled,
@@ -136,11 +136,6 @@ const TypeEdit: React.FC = () => {
             {form.errors.description}
           </Text>
         )}
-        <Switch
-          mt={16}
-          label="Enabled"
-          {...form.getInputProps("enabled", { type: "checkbox" })}
-        />
       </form>
     </Edit>
   );

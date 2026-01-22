@@ -13,6 +13,7 @@ import {
 import { useInvalidate, useCreate } from "@refinedev/core";
 import { useForm } from "@mantine/form";
 import { useState } from "react";
+import { showNotification } from "@mantine/notifications";
 
 // Interface untuk varian
 interface IVariant {
@@ -93,10 +94,19 @@ export default function AddVariantModal({
             setFiles([]);
             invalidate({ resource: "product/list", invalidates: ["list"] });
             onClose();
+            showNotification({
+              title: "Success",
+              message: "Product variant created successfully",
+              color: "green",
+            });
           },
           onError: (error) => {
             console.error("Variant creation error:", error);
-            alert("Failed to add variant");
+            showNotification({
+              title: "Failed",
+              message: "Failed to create product variant",
+              color: "red",
+            });
           },
         }
       );

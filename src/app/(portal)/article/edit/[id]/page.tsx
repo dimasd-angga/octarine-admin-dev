@@ -356,7 +356,7 @@ export default function ArticleEdit() {
               styles={{ label: { fontWeight: 500, color: "#1A1B1E" } }}
             />
 
-            <Switch
+            {/* <Switch
               label="Enabled"
               checked={form.values.enabled}
               onChange={(event) =>
@@ -364,7 +364,7 @@ export default function ArticleEdit() {
               }
               mt="sm"
               styles={{ label: { fontWeight: 500, color: "#1A1B1E" } }}
-            />
+            /> */}
 
             <Switch
               label="Show Comments"

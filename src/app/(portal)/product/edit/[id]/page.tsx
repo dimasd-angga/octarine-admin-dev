@@ -13,6 +13,8 @@ import {
   Title,
   Text,
   Stack,
+  ActionIcon,
+  Loader,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import {
@@ -21,6 +23,8 @@ import {
   useResource,
   useOne,
   useList,
+  useCreate,
+  useInvalidate,
 } from "@refinedev/core";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
@@ -38,6 +42,9 @@ export default function ProductEditPage() {
   const { resource } = useResource();
 
   const { mutate } = useUpdate();
+  const { mutate: removeProductImage } = useCreate();
+  const { mutate: reorderImages } = useUpdate();
+  const invalidate = useInvalidate();
 
   const [thumbnails, setThumbnails] = useState<File[]>([]);
   const [thumbnailPreviewUrls, setThumbnailPreviewUrls] = useState<string[]>(
@@ -45,6 +52,13 @@ export default function ProductEditPage() {
   );
   const [files, setFiles] = useState<File[]>([]);
   const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
+  const [imageObjects, setImageObjects] = useState<
+    { id: number; url: string; objectKey: string }[]
+  >([]);
+  const [isRemovingImage, setIsRemovingImage] = useState<{
+    [key: number]: boolean;
+  }>({});
+  const [isReordering, setIsReordering] = useState(false);
   const { data: productData, isLoading } = useOne({
     resource: "product",
     id: productId,
@@ -141,6 +155,97 @@ export default function ProductEditPage() {
     }
   };
 
+  // Extract objectKey from image URL (last segment of path)
+  const getObjectKeyFromUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      const pathSegments = urlObj.pathname.split("/");
+      return pathSegments[pathSegments.length - 1] || url;
+    } catch {
+      return url;
+    }
+  };
+
+  // Handle removing a product image
+  const handleRemoveImage = (imageIndex: number, imageUrl: string) => {
+    const objectKey = getObjectKeyFromUrl(imageUrl);
+    // We'll use index as a pseudo-id for tracking loading state
+    setIsRemovingImage((prev) => ({ ...prev, [imageIndex]: true }));
+
+    removeProductImage(
+      {
+        resource: `product/removeImage/${productId}`,
+        values: { id: Number(productId), objectKey },
+      },
+      {
+        onSuccess: () => {
+          setFilePreviewUrls((prev) => prev.filter((_, i) => i !== imageIndex));
+          setIsRemovingImage((prev) => ({ ...prev, [imageIndex]: false }));
+          invalidate({
+            resource: "product",
+            invalidates: ["detail"],
+            id: productId,
+          });
+          showNotification({
+            title: "Success",
+            message: "Image removed successfully",
+            color: "green",
+          });
+        },
+        onError: (error) => {
+          console.error("Remove image error:", error);
+          setIsRemovingImage((prev) => ({ ...prev, [imageIndex]: false }));
+          showNotification({
+            title: "Error",
+            message: "Failed to remove image",
+            color: "red",
+          });
+        },
+      }
+    );
+  };
+
+  // Handle reordering images (move image up or down)
+  const handleMoveImage = (fromIndex: number, direction: "up" | "down") => {
+    const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= filePreviewUrls.length) return;
+
+    const newOrder = [...filePreviewUrls];
+    const [movedItem] = newOrder.splice(fromIndex, 1);
+    newOrder.splice(toIndex, 0, movedItem);
+
+    const objectKeys = newOrder.map((url) => getObjectKeyFromUrl(url));
+
+    setIsReordering(true);
+    reorderImages(
+      {
+        resource: "product/:id/images/reorder",
+        id: productId,
+        values: { objectKeys },
+      },
+      {
+        onSuccess: () => {
+          setFilePreviewUrls(newOrder);
+          setIsReordering(false);
+          showNotification({
+            title: "Success",
+            message: "Images reordered successfully",
+            color: "green",
+          });
+        },
+        onError: (error) => {
+          console.error("Reorder images error:", error);
+          setIsReordering(false);
+          showNotification({
+            title: "Error",
+            message: "Failed to reorder images",
+            color: "red",
+          });
+        },
+      }
+    );
+  };
+
   const handleSubmit = (values: typeof form.values) => {
     mutate(
       {
@@ -219,20 +324,81 @@ export default function ProductEditPage() {
           mt="sm"
         />
         {filePreviewUrls.length > 0 && (
-          <Group mt="sm" mb="sm">
-            {filePreviewUrls.map((url, index) => (
-              <Image
-                key={index}
-                src={url}
-                alt={`File Preview ${index + 1}`}
-                width={200}
-                height={200}
-                radius="md"
-                fit="contain"
-                withPlaceholder
-              />
-            ))}
-          </Group>
+          <Stack mt="sm" mb="sm">
+            <Group align="center" spacing="xs">
+              <Text size="sm" weight={500}>
+                Product Images
+              </Text>
+              {isReordering && <Loader size="xs" />}
+            </Group>
+            <Group>
+              {filePreviewUrls.map((url, index) => (
+                <Box
+                  key={index}
+                  pos="relative"
+                  style={{
+                    border: "1px solid #dee2e6",
+                    borderRadius: "8px",
+                    padding: "8px",
+                  }}
+                >
+                  <Image
+                    src={url}
+                    alt={`File Preview ${index + 1}`}
+                    width={180}
+                    height={180}
+                    radius="md"
+                    fit="contain"
+                    withPlaceholder
+                  />
+                  <Group position="apart" mt="xs" style={{ width: "100%" }}>
+                    <Group spacing="xs">
+                      <ActionIcon
+                        size="sm"
+                        variant="light"
+                        color="gray"
+                        disabled={index === 0 || isReordering}
+                        onClick={() => handleMoveImage(index, "up")}
+                        title="Move up"
+                      >
+                        ↑
+                      </ActionIcon>
+                      <ActionIcon
+                        size="sm"
+                        variant="light"
+                        color="gray"
+                        disabled={
+                          index === filePreviewUrls.length - 1 || isReordering
+                        }
+                        onClick={() => handleMoveImage(index, "down")}
+                        title="Move down"
+                      >
+                        ↓
+                      </ActionIcon>
+                    </Group>
+                    <Button
+                      size="xs"
+                      color="red"
+                      variant="light"
+                      loading={isRemovingImage[index]}
+                      disabled={isReordering}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            "Are you sure you want to remove this image?"
+                          )
+                        ) {
+                          handleRemoveImage(index, url);
+                        }
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </Group>
+                </Box>
+              ))}
+            </Group>
+          </Stack>
         )}
 
         <TextInput

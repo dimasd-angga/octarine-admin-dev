@@ -23,6 +23,7 @@ import { ColumnDef, flexRender } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
+import { formatDateDisplay } from "@/utils/dateUtils";
 
 const ColumnSorter: React.FC<{ column: any }> = ({ column }) => {
   if (!column.getCanSort()) return null;
@@ -80,10 +81,20 @@ export default function VoucherListPage() {
         header: "Min Order",
         accessorKey: "minOrderAmount",
       },
-      { id: "validFrom", header: "Valid From", accessorKey: "validFrom" },
-      { id: "validUntil", header: "Valid Until", accessorKey: "validUntil" },
       { id: "usageLimit", header: "Usage Limit", accessorKey: "usageLimit" },
       { id: "usedCount", header: "Used Count", accessorKey: "usedCount" },
+      {
+        id: "validFrom",
+        header: "Valid From",
+        accessorKey: "validFrom",
+        cell: ({ getValue }) => formatDateDisplay(getValue() as string),
+      },
+      {
+        id: "validUntil",
+        header: "Valid Until",
+        accessorKey: "validUntil",
+        cell: ({ getValue }) => formatDateDisplay(getValue() as string),
+      },
       {
         id: "restricted",
         header: "Restricted",
@@ -95,8 +106,18 @@ export default function VoucherListPage() {
         header: "Assigned Users",
         accessorKey: "assignedUserCount",
       },
-      { id: "createdAt", header: "Created At", accessorKey: "createdAt" },
-      { id: "modifiedAt", header: "Modified At", accessorKey: "modifiedAt" },
+      {
+        id: "createdAt",
+        header: "Created At",
+        accessorKey: "createdAt",
+        cell: ({ getValue }) => formatDateDisplay(getValue() as string),
+      },
+      {
+        id: "modifiedAt",
+        header: "Modified At",
+        accessorKey: "modifiedAt",
+        cell: ({ getValue }) => formatDateDisplay(getValue() as string),
+      },
       {
         id: "actions",
         header: "Actions",

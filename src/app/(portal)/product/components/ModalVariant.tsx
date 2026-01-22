@@ -25,6 +25,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { IProduct, IVariant } from "@interface/product";
+import { showNotification } from "@mantine/notifications";
 
 interface VariantModalProps {
   opened: boolean;
@@ -47,6 +48,8 @@ export default function ModalVariant({
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState<{ [key: number]: boolean }>({});
+  const [isRemovingImage, setIsRemovingImage] = useState(false);
+  const { mutate: deleteVariantImage } = useDelete();
 
   const editVariantForm = useForm<IVariant>({
     initialValues: {
@@ -161,10 +164,19 @@ export default function ModalVariant({
             setPreviewUrl(data.data.image || null);
             invalidate({ resource: "product/list", invalidates: ["list"] });
             onClose();
+            showNotification({
+              title: "Success",
+              message: "Product variant updated successfully",
+              color: "green",
+            });
           },
           onError: (error) => {
             console.error("Variant update error:", error);
-            alert("Failed to update variant");
+            showNotification({
+              title: "Failed",
+              message: "Failed to update product variant",
+              color: "red",
+            });
           },
         }
       );
@@ -321,13 +333,65 @@ export default function ModalVariant({
       >
         <Stack spacing="md">
           {previewUrl && (
-            <Image
-              src={previewUrl}
-              alt={`Variant Image ID: ${selectedVariant?.id}`}
-              width={200}
-              height={200}
-              fit="contain"
-            />
+            <Box pos="relative" style={{ display: "inline-block" }}>
+              <Image
+                src={previewUrl}
+                alt={`Variant Image ID: ${selectedVariant?.id}`}
+                width={200}
+                height={200}
+                fit="contain"
+              />
+              {selectedVariant?.imageUrl && (
+                <Button
+                  size="xs"
+                  color="red"
+                  variant="filled"
+                  loading={isRemovingImage}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Are you sure you want to remove this image?"
+                      )
+                    ) {
+                      setIsRemovingImage(true);
+                      deleteVariantImage(
+                        {
+                          resource: `product/variant/${selectedVariant.id}/image`,
+                          id: "",
+                        },
+                        {
+                          onSuccess: () => {
+                            setPreviewUrl(null);
+                            setIsRemovingImage(false);
+                            invalidate({
+                              resource: "product/list",
+                              invalidates: ["list"],
+                            });
+                            showNotification({
+                              title: "Success",
+                              message: "Variant image removed successfully",
+                              color: "green",
+                            });
+                          },
+                          onError: (error) => {
+                            console.error("Remove variant image error:", error);
+                            setIsRemovingImage(false);
+                            showNotification({
+                              title: "Error",
+                              message: "Failed to remove variant image",
+                              color: "red",
+                            });
+                          },
+                        }
+                      );
+                    }
+                  }}
+                  mt="xs"
+                >
+                  Remove Image
+                </Button>
+              )}
+            </Box>
           )}
           <form onSubmit={editVariantForm.onSubmit(handleEditVariant)}>
             <NumberInput
