@@ -445,7 +445,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <NextTopLoader />
+        <NextTopLoader showSpinner={false} />
         <Suspense>
           <MantineProvider
             theme={RefineThemes.Blue}

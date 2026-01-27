@@ -86,7 +86,7 @@ const TypeEdit: React.FC = () => {
             color: "red",
           });
         },
-      }
+      },
     );
   };
 
@@ -109,7 +109,7 @@ const TypeEdit: React.FC = () => {
   return (
     <Edit
       saveButtonProps={{
-        onClick: form.onSubmit(handleSubmit),
+        onClick: () => form.onSubmit(handleSubmit),
         loading: isSaving,
       }}
       isLoading={isLoading}
