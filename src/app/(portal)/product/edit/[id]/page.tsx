@@ -43,12 +43,13 @@ export default function ProductEditPage() {
 
   const { mutate } = useUpdate();
   const { mutate: removeProductImage } = useCreate();
+  const { mutate: addProductImage } = useCreate();
   const { mutate: reorderImages } = useUpdate();
   const invalidate = useInvalidate();
 
   const [thumbnails, setThumbnails] = useState<File[]>([]);
   const [thumbnailPreviewUrls, setThumbnailPreviewUrls] = useState<string[]>(
-    []
+    [],
   );
   const [files, setFiles] = useState<File[]>([]);
   const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
@@ -59,6 +60,7 @@ export default function ProductEditPage() {
     [key: number]: boolean;
   }>({});
   const [isReordering, setIsReordering] = useState(false);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const { data: productData, isLoading } = useOne({
     resource: "product",
     id: productId,
@@ -144,15 +146,63 @@ export default function ProductEditPage() {
     }
   };
 
+  // Upload each file via POST /product/addImage/{id}
   const handleFilesChange = (selectedFiles: File[] | null) => {
-    if (selectedFiles) {
-      setFiles(selectedFiles);
-      const urls = selectedFiles.map((file) => URL.createObjectURL(file));
-      setFilePreviewUrls(urls);
-    } else {
+    if (!selectedFiles || selectedFiles.length === 0) {
       setFiles([]);
-      setFilePreviewUrls([]);
+      return;
     }
+
+    setIsUploadingFiles(true);
+    let completed = 0;
+    let hasError = false;
+
+    selectedFiles.forEach((file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      addProductImage(
+        {
+          resource: `product/addImage/${productId}`,
+          values: formData,
+        },
+        {
+          onSuccess: () => {
+            completed++;
+            if (completed === selectedFiles.length) {
+              setIsUploadingFiles(false);
+              setFiles([]);
+              invalidate({
+                resource: "product",
+                invalidates: ["detail"],
+                id: productId,
+              });
+              if (!hasError) {
+                showNotification({
+                  title: "Success",
+                  message: `${completed} image(s) uploaded successfully`,
+                  color: "green",
+                });
+              }
+            }
+          },
+          onError: (error) => {
+            hasError = true;
+            completed++;
+            console.error("Upload image error:", error);
+            showNotification({
+              title: "Error",
+              message: `Failed to upload file: ${file.name}`,
+              color: "red",
+            });
+            if (completed === selectedFiles.length) {
+              setIsUploadingFiles(false);
+              setFiles([]);
+            }
+          },
+        },
+      );
+    });
   };
 
   // Extract objectKey from image URL (last segment of path)
@@ -201,7 +251,7 @@ export default function ProductEditPage() {
             color: "red",
           });
         },
-      }
+      },
     );
   };
 
@@ -242,7 +292,7 @@ export default function ProductEditPage() {
             color: "red",
           });
         },
-      }
+      },
     );
   };
 
@@ -270,7 +320,7 @@ export default function ProductEditPage() {
             color: "red",
           });
         },
-      }
+      },
     );
   };
 
@@ -317,10 +367,14 @@ export default function ProductEditPage() {
 
         <FileInput
           label="Additional Files"
+          description={
+            isUploadingFiles ? "Uploading..." : "Select files to upload"
+          }
           multiple
           value={files}
           onChange={handleFilesChange}
-          accept="*"
+          accept="image/*"
+          disabled={isUploadingFiles}
           mt="sm"
         />
         {filePreviewUrls.length > 0 && (
@@ -385,7 +439,7 @@ export default function ProductEditPage() {
                       onClick={() => {
                         if (
                           window.confirm(
-                            "Are you sure you want to remove this image?"
+                            "Are you sure you want to remove this image?",
                           )
                         ) {
                           handleRemoveImage(index, url);

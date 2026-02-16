@@ -1,6 +1,6 @@
 "use client";
 
-import { Switch, Text, TextInput } from "@mantine/core";
+import { Button, Group, Switch, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { Edit } from "@refinedev/mantine";
 import { useOne, useUpdate } from "@refinedev/core";
@@ -108,11 +108,8 @@ const TypeEdit: React.FC = () => {
 
   return (
     <Edit
-      saveButtonProps={{
-        onClick: () => form.onSubmit(handleSubmit),
-        loading: isSaving,
-      }}
-      isLoading={isLoading}
+      deleteButtonProps={{ style: { display: "none" } }}
+      saveButtonProps={{ style: { display: "none" } }}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <TextInput
@@ -136,6 +133,11 @@ const TypeEdit: React.FC = () => {
             {form.errors.description}
           </Text>
         )}
+        <Group mt="md">
+          <Button type="submit" loading={isSaving}>
+            Submit
+          </Button>
+        </Group>
       </form>
     </Edit>
   );

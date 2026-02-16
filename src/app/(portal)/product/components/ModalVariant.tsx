@@ -103,8 +103,8 @@ export default function ModalVariant({
             enabled: !currentEnabled,
           }),
         ],
-        { type: "application/json" }
-      )
+        { type: "application/json" },
+      ),
     );
     updateVariant(
       {
@@ -124,7 +124,7 @@ export default function ModalVariant({
         onError: () => {
           setIsUpdating((prev) => ({ ...prev, [variantId]: false }));
         },
-      }
+      },
     );
   };
 
@@ -146,8 +146,8 @@ export default function ModalVariant({
               enabled: values.enabled,
             }),
           ],
-          { type: "application/json" }
-        )
+          { type: "application/json" },
+        ),
       );
 
       updateVariant(
@@ -178,7 +178,7 @@ export default function ModalVariant({
               color: "red",
             });
           },
-        }
+        },
       );
     } else {
       alert("failed to edit variant");
@@ -201,7 +201,7 @@ export default function ModalVariant({
             console.error("Variant delete error:", error);
             alert("Failed to delete variant");
           },
-        }
+        },
       );
     }
   };
@@ -211,26 +211,27 @@ export default function ModalVariant({
       { id: "id", header: "ID", accessorKey: "id" },
       { id: "volume", header: "Volume", accessorKey: "volume" },
       { id: "price", header: "Price", accessorKey: "price" },
-      // {
-      //   id: "enabled",
-      //   header: "Enabled",
-      //   accessorKey: "enabled",
-      //   cell: ({ row, getValue }) => {
-      //     const variantId = row.original.id;
-      //     const enabled = getValue() as boolean;
+      {
+        id: "enabled",
+        header: "Enabled",
+        accessorKey: "enabled",
+        cell: ({ row, getValue }) => {
+          const variantId = row.original.id;
+          const enabled = getValue() as boolean;
 
-      //     return (
-      //       <Group spacing="xs">
-      //         <Switch
-      //           checked={enabled}
-      //           onChange={() => handleToggleEnabled(variantId, enabled)}
-      //           disabled={isUpdating[variantId]}
-      //         />
-      //         {isUpdating[variantId] && <LoadingOverlay visible />}
-      //       </Group>
-      //     );
-      //   },
-      // },
+          return (
+            <Group spacing="xs">
+              {/* <Switch
+                checked={enabled}
+                onChange={() => handleToggleEnabled(variantId, enabled)}
+                disabled={isUpdating[variantId]}
+              />
+              {isUpdating[variantId] && <LoadingOverlay visible />} */}
+              {enabled ? "Enabled" : "Disabled"}
+            </Group>
+          );
+        },
+      },
       {
         id: "actions",
         header: "Actions",
@@ -269,7 +270,7 @@ export default function ModalVariant({
         },
       },
     ],
-    [variants, isUpdating]
+    [variants, isUpdating],
   );
 
   const table = useReactTable({
@@ -295,7 +296,7 @@ export default function ModalVariant({
                     <th key={header.id}>
                       {flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                     </th>
                   ))}
@@ -309,7 +310,7 @@ export default function ModalVariant({
                     <td key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}
@@ -350,7 +351,7 @@ export default function ModalVariant({
                   onClick={() => {
                     if (
                       window.confirm(
-                        "Are you sure you want to remove this image?"
+                        "Are you sure you want to remove this image?",
                       )
                     ) {
                       setIsRemovingImage(true);
@@ -382,7 +383,7 @@ export default function ModalVariant({
                               color: "red",
                             });
                           },
-                        }
+                        },
                       );
                     }
                   }}
@@ -434,17 +435,17 @@ export default function ModalVariant({
               }
               hideControls
             />
-            {/* <Switch
+            <Switch
               label="Enabled"
               className="form-group"
               checked={editVariantForm.values.enabled}
               onChange={(event) =>
                 editVariantForm.setFieldValue(
                   "enabled",
-                  event.currentTarget.checked
+                  event.currentTarget.checked,
                 )
               }
-            /> */}
+            />
             <FileInput
               label="Files"
               className="form-group"

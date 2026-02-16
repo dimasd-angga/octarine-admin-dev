@@ -79,8 +79,8 @@ export default function AddVariantModal({
               enabled: values.enabled,
             }),
           ],
-          { type: "application/json" }
-        )
+          { type: "application/json" },
+        ),
       );
 
       createVariant(
@@ -108,7 +108,7 @@ export default function AddVariantModal({
               color: "red",
             });
           },
-        }
+        },
       );
     } else {
       alert("Please upload at least one file.");
@@ -163,16 +163,16 @@ export default function AddVariantModal({
             }
             hideControls
           />
-          {/* <Switch
+          <Switch
             label="Enabled"
             checked={addVariantForm.values.enabled}
             onChange={(event) =>
               addVariantForm.setFieldValue(
                 "enabled",
-                event.currentTarget.checked
+                event.currentTarget.checked,
               )
             }
-          /> */}
+          />
           <FileInput
             label="Files"
             multiple
