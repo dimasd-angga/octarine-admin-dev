@@ -98,7 +98,11 @@ const VoucherEdit = () => {
           label="Valid From"
           type="datetime-local"
           {...getInputProps("validFrom")}
-          value={values.validFrom.slice(0, 16)}
+          value={
+            values.validFrom
+              ? formatLocalDateTime(new Date(values.validFrom)).slice(0, 16)
+              : ""
+          }
           onChange={(event) =>
             setFieldValue("validFrom", event.target.value + ":00")
           }
@@ -108,7 +112,11 @@ const VoucherEdit = () => {
           label="Valid Until"
           type="datetime-local"
           {...getInputProps("validUntil")}
-          value={values.validUntil.slice(0, 16)}
+          value={
+            values.validUntil
+              ? formatLocalDateTime(new Date(values.validUntil)).slice(0, 16)
+              : ""
+          }
           onChange={(event) =>
             setFieldValue("validUntil", event.target.value + ":00")
           }

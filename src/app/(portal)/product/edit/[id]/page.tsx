@@ -44,6 +44,7 @@ export default function ProductEditPage() {
   const { mutate } = useUpdate();
   const { mutate: removeProductImage } = useCreate();
   const { mutate: addProductImage } = useCreate();
+  const { mutate: updateProductThumbnail } = useUpdate();
   const { mutate: reorderImages } = useUpdate();
   const invalidate = useInvalidate();
 
@@ -61,6 +62,7 @@ export default function ProductEditPage() {
   }>({});
   const [isReordering, setIsReordering] = useState(false);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const { data: productData, isLoading } = useOne({
     resource: "product",
     id: productId,
@@ -136,10 +138,46 @@ export default function ProductEditPage() {
   }, [productData]);
 
   const handleThumbnailChange = (selectedFiles: File[] | null) => {
-    if (selectedFiles) {
+    if (selectedFiles && selectedFiles.length > 0) {
       setThumbnails(selectedFiles);
       const urls = selectedFiles.map((file) => URL.createObjectURL(file));
       setThumbnailPreviewUrls(urls);
+
+      setIsUploadingThumbnail(true);
+      const formData = new FormData();
+      formData.append("thumbnail", selectedFiles[0]);
+
+      updateProductThumbnail(
+        {
+          resource: `product/:id/thumbnail`,
+          values: formData,
+          id: productId,
+        },
+        {
+          onSuccess: () => {
+            setIsUploadingThumbnail(false);
+            invalidate({
+              resource: "product",
+              invalidates: ["detail"],
+              id: productId,
+            });
+            showNotification({
+              title: "Success",
+              message: "Thumbnail updated successfully",
+              color: "green",
+            });
+          },
+          onError: (error) => {
+            console.error("Upload thumbnail error:", error);
+            setIsUploadingThumbnail(false);
+            showNotification({
+              title: "Error",
+              message: "Failed to upload thumbnail",
+              color: "red",
+            });
+          },
+        },
+      );
     } else {
       setThumbnails([]);
       setThumbnailPreviewUrls([]);
@@ -342,10 +380,12 @@ export default function ProductEditPage() {
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <FileInput
           label="Thumbnails"
+          description={isUploadingThumbnail ? "Uploading..." : undefined}
           multiple
           value={thumbnails}
           onChange={handleThumbnailChange}
           accept="image/*"
+          disabled={isUploadingThumbnail}
           mt="sm"
         />
         {thumbnailPreviewUrls.length > 0 && (
