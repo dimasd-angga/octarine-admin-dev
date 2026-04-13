@@ -48,6 +48,8 @@ import { dataProvider } from "@providers/data-provider";
 import { axiosInstance } from "@service/axiosInstance";
 import { CustomTitle } from "@components/layout/CustomSidebarTitle";
 import NextTopLoader from "nextjs-toploader";
+import { SupportUnreadProvider } from "@providers/SupportUnreadProvider";
+import { SupportBadgeIcon } from "@components/layout/SupportBadge";
 
 export default function RootLayout({
   children,
@@ -211,7 +213,7 @@ export default function RootLayout({
       list: "/live-chat-support",
       meta: {
         label: "Live Chat Support",
-        icon: <IconHeadset />,
+        icon: <SupportBadgeIcon />,
       },
     },
     {
@@ -462,15 +464,17 @@ export default function RootLayout({
                     authProvider={authProvider}
                     resources={resources}
                   >
-                    {isLoginPage ? (
-                      children
-                    ) : (
-                      <ThemedLayoutV2
-                        Sider={() => <ThemedSiderV2 Title={CustomTitle} />}
-                      >
-                        {children}
-                      </ThemedLayoutV2>
-                    )}
+                    <SupportUnreadProvider>
+                      {isLoginPage ? (
+                        children
+                      ) : (
+                        <ThemedLayoutV2
+                          Sider={() => <ThemedSiderV2 Title={CustomTitle} />}
+                        >
+                          {children}
+                        </ThemedLayoutV2>
+                      )}
+                    </SupportUnreadProvider>
                     <RefineKbar />
                   </Refine>
                 </DevtoolsProvider>

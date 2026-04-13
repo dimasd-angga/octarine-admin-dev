@@ -91,7 +91,7 @@ export const dataProvider = (axios: AxiosInstance): DataProvider => ({
 
     if (sorters && sorters.length > 0) {
       const sorter = sorters[0];
-      query = { ...query, soryBy: sorter.field, sortDir: sorter.order };
+      query = { ...query, sortBy: sorter.field, sortDir: sorter.order };
     }
 
     if (Object.keys(query).length > 0) {
