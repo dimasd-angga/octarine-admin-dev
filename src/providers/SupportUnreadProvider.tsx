@@ -26,7 +26,7 @@ export const SupportUnreadProvider: React.FC<{ children: ReactNode }> = ({ child
             },
         ],
         queryOptions: {
-            refetchInterval: 60000, // Poll every 60 seconds
+            refetchInterval: 10000, // Poll every 10 seconds
         },
     });
 

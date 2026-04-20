@@ -195,11 +195,20 @@ export default function ModalVariant({
         {
           onSuccess: () => {
             invalidate({ resource: "product/list", invalidates: ["list"] });
+            showNotification({
+              title: "Success",
+              message: "Product variant deleted successfully",
+              color: "green",
+            });
             onClose();
           },
           onError: (error) => {
             console.error("Variant delete error:", error);
-            alert("Failed to delete variant");
+            showNotification({
+              title: "Failed",
+              message: "Failed to delete product variant",
+              color: "red",
+            });
           },
         },
       );

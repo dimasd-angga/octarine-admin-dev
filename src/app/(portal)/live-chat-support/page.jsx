@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     Avatar,
     Box,
@@ -48,6 +48,9 @@ export default function ChatPage() {
                 order: "desc",
             },
         ],
+        queryOptions: {
+            refetchInterval: 10000, // Poll sidebar every 10 seconds
+        },
     });
 
 
@@ -97,6 +100,7 @@ export default function ChatPage() {
         id: selectedChatId,
         queryOptions: {
             enabled: !!selectedChatId, // only run when ID exists
+            refetchInterval: 3000, // Poll active chat every 3 seconds
         },
     });
 
@@ -104,7 +108,7 @@ export default function ChatPage() {
 
     // 🔹 Automatically refresh unread counts when chat detail is loaded
     // (since backend marks messages as read upon fetching detail)
-    React.useEffect(() => {
+    useEffect(() => {
         if (activeChat?.id === selectedChatId) {
             const timer = setTimeout(() => {
                 globalUnreadRefetch();
@@ -112,7 +116,21 @@ export default function ChatPage() {
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [activeChat?.id, selectedChatId]);
+    }, [activeChat?.id, selectedChatId, activeChat?.messages?.length]); // Added messages length as dependency
+
+    // 🔹 Auto-scroll to bottom when new messages arrive
+    const scrollViewportRef = useRef(null);
+    const scrollToBottom = () => {
+        if (scrollViewportRef.current) {
+            scrollViewportRef.current.scrollTo({ top: scrollViewportRef.current.scrollHeight, behavior: 'smooth' });
+        }
+    };
+
+    useEffect(() => {
+        if (activeChat?.messages) {
+            scrollToBottom();
+        }
+    }, [activeChat?.messages]);
 
     // 🔹 Message composer
     const [newMessage, setNewMessage] = useState("");
@@ -277,7 +295,7 @@ export default function ChatPage() {
                         </Group>
 
                         {/* Messages */}
-                        <ScrollArea style={{ height: "75vh" }}>
+                        <ScrollArea style={{ height: "75vh" }} viewportRef={scrollViewportRef}>
                             <Stack spacing="sm">
                                 {activeChat.messages?.map((msg) => (
                                     <Box
@@ -381,6 +399,7 @@ export default function ChatPage() {
                                 style={{ flex: 1 }}
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.currentTarget.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleSend()}
                                 disabled={sending}
                                 rightSection={
                                     <ActionIcon
