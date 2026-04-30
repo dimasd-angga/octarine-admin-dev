@@ -10,12 +10,17 @@ import {
   Text,
   ActionIcon,
   Menu,
+  TextInput,
+  Select,
+  Flex,
+  LoadingOverlay,
 } from "@mantine/core";
+import { useDebouncedValue } from "@mantine/hooks";
 import { showNotification } from "@mantine/notifications";
 import { useNavigation, useInvalidate, useUpdate } from "@refinedev/core";
 import { List } from "@refinedev/mantine";
 import { flexRender } from "@tanstack/react-table";
-import { IconEye, IconRefresh, IconStar } from "@tabler/icons-react";
+import { IconEye, IconRefresh, IconSearch, IconStar } from "@tabler/icons-react";
 import { useTable } from "@refinedev/react-table";
 
 const ColumnSorter = ({ column }) => {
@@ -176,20 +181,110 @@ export default function OrderListPage() {
   const {
     getHeaderGroups,
     getRowModel,
-    refineCore: { setCurrent, pageCount, current },
+    refineCore: {
+      setCurrent,
+      pageCount,
+      current,
+      setFilters,
+      filters,
+      tableQueryResult: { isFetching },
+    },
   } = useTable({
     columns,
     refineCoreProps: {
       resource: "order/list",
       pagination: { pageSize: 10, mode: "server" },
-      sorters: { mode: "server" }
+      sorters: { mode: "server" },
     },
   });
+
+  const [searchValue, setSearchValue] = React.useState(
+    () => filters?.find((f) => f.field === "search")?.value || ""
+  );
+  const [debouncedSearchValue] = useDebouncedValue(searchValue, 500);
+
+  const [statusValue, setStatusValue] = React.useState(
+    () => filters?.find((f) => f.field === "status")?.value || null
+  );
+
+  // Sync local state with external filter changes (e.g. URL)
+  React.useEffect(() => {
+    const searchFilter = filters?.find((f) => f.field === "search")?.value || "";
+    if (searchFilter !== searchValue) {
+      setSearchValue(searchFilter);
+    }
+
+    const statusFilter =
+      filters?.find((f) => f.field === "status")?.value || null;
+    if (statusFilter !== statusValue) {
+      setStatusValue(statusFilter);
+    }
+  }, [filters]);
+
+  // Apply debounced search
+  React.useEffect(() => {
+    setFilters(
+      [
+        {
+          field: "search",
+          operator: "eq",
+          value: debouncedSearchValue,
+        },
+      ],
+      "merge"
+    );
+  }, [debouncedSearchValue]);
+
+  const handleStatusChange = (value) => {
+    setStatusValue(value);
+    setFilters(
+      [
+        {
+          field: "status",
+          operator: "eq",
+          value: value,
+        },
+      ],
+      "merge"
+    );
+  };
 
   return (
     <ScrollArea>
       <List>
-        <Table highlightOnHover>
+        <Flex mb="md" gap="md" align="flex-end">
+          <TextInput
+            label="Search"
+            placeholder="Order ID or Customer..."
+            icon={<IconSearch size={16} />}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <Select
+            label="Status"
+            placeholder="Filter by Status"
+            clearable
+            data={[
+              { value: "INIT", label: "🟠 Init" },
+              { value: "WAITING_FOR_PAYMENT", label: "💰 Waiting for Payment" },
+              { value: "PAID", label: "✅ Paid" },
+              {
+                value: "WAITING_FOR_DELIVERY",
+                label: "📦 Waiting for Delivery",
+              },
+              { value: "DELIVERING", label: "🚚 Delivering" },
+              { value: "DELIVERED", label: "🎉 Delivered" },
+              { value: "CANCELLED", label: "❌ Cancelled" },
+            ]}
+            value={statusValue}
+            onChange={handleStatusChange}
+            style={{ width: 250 }}
+          />
+        </Flex>
+        <Box sx={{ position: "relative" }}>
+          <LoadingOverlay visible={isFetching} overlayBlur={2} />
+          <Table highlightOnHover>
           <thead>
             {getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -226,6 +321,7 @@ export default function OrderListPage() {
             ))}
           </tbody>
         </Table>
+        </Box>
         <br />
         <Pagination
           position="right"

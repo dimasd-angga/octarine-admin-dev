@@ -54,7 +54,7 @@ export default function VoucherListPage() {
   // Modal states for assigning user
   const [opened, { open, close }] = useDisclosure(false);
   const [selectedVoucherId, setSelectedVoucherId] = useState<number | null>(
-    null
+    null,
   );
   const [userIdentifier, setUserIdentifier] = useState("");
 
@@ -157,7 +157,7 @@ export default function VoucherListPage() {
         },
       },
     ],
-    []
+    [],
   );
 
   const {
@@ -170,6 +170,13 @@ export default function VoucherListPage() {
       resource: "voucher/list",
       pagination: { pageSize: 10, mode: "server" },
       sorters: { mode: "server" },
+      meta: {
+        variables: {
+          value: {
+            useEnabled: false,
+          },
+        },
+      },
     },
   });
 
@@ -192,7 +199,7 @@ export default function VoucherListPage() {
               ({
                 value: u.id,
                 label: u.name || u.email,
-              } as SelectItem)
+              } as SelectItem),
           )}
           value={userIdentifier}
           onChange={(value) => setUserIdentifier(value!)}
@@ -251,7 +258,7 @@ export default function VoucherListPage() {
                       [selectedVoucherId!]: false,
                     }));
                   },
-                }
+                },
               );
             }}
           >
@@ -274,7 +281,7 @@ export default function VoucherListPage() {
                           <Box>
                             {flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                           </Box>
                           <Group spacing="xs" noWrap>
@@ -294,7 +301,7 @@ export default function VoucherListPage() {
                     <td key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}

@@ -64,7 +64,7 @@ export const dataProvider = (axios: AxiosInstance): DataProvider => ({
     let url = new URL(`${API_URL}/${resource}`);
     if (meta?.variables?.value.baseEndpoint != null) {
       url = new URL(
-        `${BASE_URL}/${meta?.variables?.value.baseEndpoint}/${resource}`
+        `${BASE_URL}/${meta?.variables?.value.baseEndpoint}/${resource}`,
       );
     }
     const useEnabled = meta?.variables?.value.useEnabled ?? true;
